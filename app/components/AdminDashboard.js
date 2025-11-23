@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Car, User, Clock, CheckCircle, XCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import { Building, FileText, Car, User, Clock, CheckCircle, XCircle, AlertCircle, TrendingUp } from 'lucide-react';
 import { storage } from '../utils/storage';
 
 const STATUS_ORDER = ['available', 'booked', 'cancelled', 'holiday'];
@@ -23,6 +23,33 @@ function getDatesRange(days = 7, start = new Date()) {
 }
 
 export default function AdminDashboard({ user, onLogout }) {
+
+    const [viewModal, setViewModal] = useState({
+        open: false,
+        permit: null
+    });
+
+// --- Add these handlers ---
+    const openViewModal = (permit) => {
+        setViewModal({ open: true, permit });
+    };
+
+    const closeViewModal = () => {
+        setViewModal({ open: false, permit: null });
+    };
+
+    const approveFromViewModal = () => {
+        if (!viewModal.permit) return;
+        openApproveModal(viewModal.permit.id);
+        closeViewModal();
+    };
+
+    const rejectFromViewModal = () => {
+        if (!viewModal.permit) return;
+        rejectPermit(viewModal.permit.id);
+        closeViewModal();
+    };
+
   const [permits, setPermits] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -374,8 +401,178 @@ export default function AdminDashboard({ user, onLogout }) {
             {activeTab === 'permits' && (
               <div>
                 <h2 className="text-xl font-bold text-gray-800 mb-4">Permit Requests</h2>
+                  {viewModal.open && viewModal.permit && (
+                      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                              {/* Fleet Owner Information */}
+                              <div>
+                                  <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                                      <Building className="w-5 h-5 mr-2 text-blue-600" />
+                                      Fleet Owner Information
+                                  </h3>
+                                  <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                                      <div>
+                                          <p className="text-gray-600">Owner Name</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.fleetOwnerName}</p>
+                                      </div>
+                                      {viewModal.permit.fleetOwnerEmail && (
+                                          <div>
+                                              <p className="text-gray-600">Email</p>
+                                              <p className="font-semibold text-gray-900">{viewModal.permit.fleetOwnerEmail}</p>
+                                          </div>
+                                      )}
+                                      {viewModal.permit.fleetOwnerPhone && (
+                                          <div>
+                                              <p className="text-gray-600">Phone</p>
+                                              <p className="font-semibold text-gray-900">{viewModal.permit.fleetOwnerPhone}</p>
+                                          </div>
+                                      )}
+                                      <div>
+                                          <p className="text-gray-600">Company Name</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.fleetCompanyName}</p>
+                                      </div>
+                                      <div>
+                                          <p className="text-gray-600">Base Number</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.baseNo}</p>
+                                      </div>
+                                      <div>
+                                          <p className="text-gray-600">Borough</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.borough}</p>
+                                      </div>
+                                  </div>
+                              </div>
+                              {/* Driver & License Information */}
+                              <div>
+                                  <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                                      <User className="w-5 h-5 mr-2 text-green-600" />
+                                      Driver & License Information
+                                  </h3>
+                                  <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                                      <div>
+                                          <p className="text-gray-600">Driver Name</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.driverName}</p>
+                                      </div>
+                                      <div>
+                                          <p className="text-gray-600">License Number</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.licenseNo}</p>
+                                      </div>
+                                      <div>
+                                          <p className="text-gray-600">License Expiry</p>
+                                          <p className="font-semibold text-gray-900">
+                                              {viewModal.permit.licenseExpiry ? new Date(viewModal.permit.licenseExpiry).toLocaleDateString() : ''}
+                                          </p>
+                                      </div>
+                                      {viewModal.permit.driverPhone && (
+                                          <div>
+                                              <p className="text-gray-600">Phone</p>
+                                              <p className="font-semibold text-gray-900">{viewModal.permit.driverPhone}</p>
+                                          </div>
+                                      )}
+                                      {viewModal.permit.driverEmail && (
+                                          <div>
+                                              <p className="text-gray-600">Email</p>
+                                              <p className="font-semibold text-gray-900">{viewModal.permit.driverEmail}</p>
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
+                              {/* Vehicle Information */}
+                              <div>
+                                  <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                                      <Car className="w-5 h-5 mr-2 text-purple-600" />
+                                      Vehicle Information
+                                  </h3>
+                                  <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                                      <div>
+                                          <p className="text-gray-600">Plate Number</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.vehiclePlate}</p>
+                                      </div>
+                                      <div>
+                                          <p className="text-gray-600">VIN</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.vehicleVin}</p>
+                                      </div>
+                                      <div>
+                                          <p className="text-gray-600">Make & Model</p>
+                                          <p className="font-semibold text-gray-900">
+                                              {viewModal.permit.vehicleMake} {viewModal.permit.vehicleModel}
+                                          </p>
+                                      </div>
+                                      <div>
+                                          <p className="text-gray-600">Year</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.vehicleYear}</p>
+                                      </div>
+                                      {viewModal.permit.vehicleColor && (
+                                          <div>
+                                              <p className="text-gray-600">Color</p>
+                                              <p className="font-semibold text-gray-900">{viewModal.permit.vehicleColor}</p>
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
+                              {/* Insurance Information */}
+                              <div>
+                                  <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                                      <FileText className="w-5 h-5 mr-2 text-orange-600" />
+                                      Insurance Information
+                                  </h3>
+                                  <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                                      <div>
+                                          <p className="text-gray-600">Policy Number</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.insurancePolicy}</p>
+                                      </div>
+                                      <div>
+                                          <p className="text-gray-600">Carrier</p>
+                                          <p className="font-semibold text-gray-900">{viewModal.permit.insuranceCarrier}</p>
+                                      </div>
+                                      <div>
+                                          <p className="text-gray-600">Expiry Date</p>
+                                          <p className="font-semibold text-gray-900">
+                                              {viewModal.permit.insuranceExpiry ? new Date(viewModal.permit.insuranceExpiry).toLocaleDateString() : ''}
+                                          </p>
+                                      </div>
+                                      {viewModal.permit.insuranceCoverage && (
+                                          <div>
+                                              <p className="text-gray-600">Coverage Amount</p>
+                                              <p className="font-semibold text-gray-900">{viewModal.permit.insuranceCoverage}</p>
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
+                              {/* Next Steps */}
+                              <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded mt-4">
+                                  <h4 className="font-semibold text-blue-900 mb-2">Next Steps</h4>
+                                  <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                                      <li>Your permit request is now pending review by TLC admin</li>
+                                      <li>You will be notified once the admin reviews your application</li>
+                                      <li>Please keep your contact information updated</li>
+                                  </ul>
+                              </div>
+                              {/* Modal Actions */}
+                              <div className="flex justify-end gap-2 mt-6">
+                                  <button
+                                      onClick={closeViewModal}
+                                      className="px-4 py-2 bg-gray-200 rounded text-black"
+                                  >
+                                      Close
+                                  </button>
+                                  <button
+                                      onClick={approveFromViewModal}
+                                      className="px-4 py-2 bg-green-600 rounded text-black"
+                                  >
+                                      Approve
+                                  </button>
+                                  <button
+                                      onClick={rejectFromViewModal}
+                                      className="px-4 py-2 bg-red-600 rounded text-black"
+                                  >
+                                      Reject
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  )}
 
-                {/* Approve Modal */}
+                  {/* Approve Modal */}
                 {approveModal.open && (
                   <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg shadow-xl w-96">
@@ -384,15 +581,24 @@ export default function AdminDashboard({ user, onLogout }) {
                       <label className="text-sm text-gray-700">Start Date</label>
                       <input
                         type="date"
-                        value={approveModal.start}
-                        onChange={(e) => setApproveModal(prev => ({ ...prev, start: e.target.value }))}
+                        value={approveModal.start??''}
+                        onChange={e => {
+                            const newStart = e.target.value;
+                            const newEnd = new Date(newStart);
+                            newEnd.setFullYear(newEnd.getFullYear() + 1);
+                            setApproveModal(prev => ({
+                                ...prev,
+                                start: newStart,
+                                end: newEnd.toISOString().split('T')[0]
+                            }));
+                        }}
                         className="w-full px-3 py-2 border rounded mb-3 text-black"
                       />
 
                       <label className="text-sm text-gray-700">End Date</label>
                       <input
                         type="date"
-                        value={approveModal.end}
+                        value={approveModal.end ?? ''}
                         onChange={(e) => setApproveModal(prev => ({ ...prev, end: e.target.value }))}
                         className="w-full px-3 py-2 border rounded mb-4 text-black"
                       />
@@ -455,7 +661,12 @@ export default function AdminDashboard({ user, onLogout }) {
 
                         {permit.status === 'pending' && (
                           <div className="flex gap-2">
-
+                              <button
+                                  onClick={() => openViewModal(permit)}
+                                  className="flex-1 bg-blue-600 text-gray-900 py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                              >
+                                  <AlertCircle className="w-4 h-4 mr-2" />View
+                              </button>
                             {/* NEW — approve opens modal */}
                             <button
                               onClick={() => openApproveModal(permit.id)}
