@@ -1,8 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { Car, User, FileText, Shield, CheckCircle, Building } from 'lucide-react';
+import { Car, User, FileText, Shield, CheckCircle, Building, X, Calendar } from 'lucide-react';
 import { storage } from '../utils/storage';
+
+function generateDefaultSchedule(days = 7, startDate = new Date()) {
+  const schedule = [];
+  for (let d = 0; d < days; d++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + d);
+    const dateStr = date.toISOString().split('T')[0];
+    for (let hour = 0; hour < 24; hour++) {
+      schedule.push({
+        date: dateStr,
+        hour,
+        status: 'available' // available | booked | cancelled | holiday
+      });
+    }
+  }
+  return schedule;
+}
 
 export default function UserDashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('fleet');
@@ -45,8 +62,7 @@ export default function UserDashboard({ user, onLogout }) {
     vehicle: false
   });
   const [showModal, setShowModal] = useState(false);
-  const [recentPermit, setRecentPermit] = useState(null);
-
+  const [submittedPermit, setSubmittedPermit] = useState(null);
 
   const validateCurrentTab = () => {
     const newErrors = {};
@@ -97,10 +113,8 @@ export default function UserDashboard({ user, onLogout }) {
       return;
     }
 
-    // Mark current tab as completed
     setCompletedTabs(prev => ({ ...prev, [activeTab]: true }));
 
-    // Move to next tab
     if (activeTab === 'fleet') {
       setActiveTab('driver');
     } else if (activeTab === 'driver') {
@@ -123,26 +137,25 @@ export default function UserDashboard({ user, onLogout }) {
       return;
     }
 
-    // Get existing permits from localStorage
     const permits = storage.get('permits') || [];
     
-    // Create new permit
     const newPermit = {
       id: Date.now().toString(),
       ...formData,
       status: 'pending',
       submittedBy: user.username,
       submittedAt: new Date().toISOString(),
-      approvedAt: null
+      approvedAt: null,
+      // Add schedule: default next 7 days × 24 hours (admin will edit as needed)
+      schedule: generateDefaultSchedule(7, new Date())
     };
 
-    // Add to permits array
     permits.push(newPermit);
-    
-    // Save back to localStorage
     storage.set('permits', permits);
     
-    // Show success message
+    // Show modal with submitted details
+    setSubmittedPermit(newPermit);
+    setShowModal(true);
     setSuccess(true);
     
     // Reset form
@@ -170,19 +183,19 @@ export default function UserDashboard({ user, onLogout }) {
       insuranceCoverage: ''
     });
 
-    // Reset tabs
     setActiveTab('fleet');
     setCompletedTabs({ fleet: false, driver: false, vehicle: false });
+  };
 
-    // Hide success message after 5 seconds
-    setTimeout(() => setSuccess(false), 5000);
+  const closeModal = () => {
+    setShowModal(false);
+    setSuccess(false);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -199,16 +212,238 @@ export default function UserDashboard({ user, onLogout }) {
           </div>
           <button
             onClick={onLogout}
-            className="px-4 py-2 text-sm bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors backdrop-blur-sm"
+            className="px-4 py-2 text-sm text-black bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors backdrop-blur-sm"
           >
             Logout
           </button>
         </div>
       </nav>
 
+      {/* Go to Schedule Page Button */}
+<div className="max-w-7xl mx-auto px-4 mt-6 flex justify-end">
+  <a
+    href="/schedule"
+    className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2"
+  >
+    <Calendar className="w-5 h-5 text-white" />
+    Manage Schedule
+  </a>
+</div>
+
+      {/* Success Modal */}
+      {showModal && submittedPermit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 rounded-t-2xl flex justify-between items-center">
+              <div className="flex items-center">
+                <CheckCircle className="w-8 h-8 text-white mr-3" />
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Permit Request Submitted!</h2>
+                  <p className="text-green-100 text-sm">Your request has been successfully submitted</p>
+                </div>
+              </div>
+              <button
+                onClick={closeModal}
+                className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
+              {/* Request Info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Request ID</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Status</p>
+                    <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+                      PENDING
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Submitted By</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.submittedBy}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Submitted At</p>
+                    <p className="font-semibold text-gray-900">
+                      {new Date(submittedPermit.submittedAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fleet Owner Information */}
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                  <Building className="w-5 h-5 mr-2 text-blue-600" />
+                  Fleet Owner Information
+                </h3>
+                <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Owner Name</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.fleetOwnerName}</p>
+                  </div>
+                  {submittedPermit.fleetOwnerEmail && (
+                    <div>
+                      <p className="text-gray-600">Email</p>
+                      <p className="font-semibold text-gray-900">{submittedPermit.fleetOwnerEmail}</p>
+                    </div>
+                  )}
+                  {submittedPermit.fleetOwnerPhone && (
+                    <div>
+                      <p className="text-gray-600">Phone</p>
+                      <p className="font-semibold text-gray-900">{submittedPermit.fleetOwnerPhone}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-gray-600">Company Name</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.fleetCompanyName}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Base Number</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.baseNo}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Borough</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.borough}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Driver Information */}
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                  <User className="w-5 h-5 mr-2 text-green-600" />
+                  Driver & License Information
+                </h3>
+                <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Driver Name</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.driverName}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">License Number</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.licenseNo}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">License Expiry</p>
+                    <p className="font-semibold text-gray-900">
+                      {new Date(submittedPermit.licenseExpiry).toLocaleDateString()}
+                    </p>
+                  </div>
+                  {submittedPermit.driverPhone && (
+                    <div>
+                      <p className="text-gray-600">Phone</p>
+                      <p className="font-semibold text-gray-900">{submittedPermit.driverPhone}</p>
+                    </div>
+                  )}
+                  {submittedPermit.driverEmail && (
+                    <div>
+                      <p className="text-gray-600">Email</p>
+                      <p className="font-semibold text-gray-900">{submittedPermit.driverEmail}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Vehicle Information */}
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                  <Car className="w-5 h-5 mr-2 text-purple-600" />
+                  Vehicle Information
+                </h3>
+                <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Plate Number</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.vehiclePlate}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">VIN</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.vehicleVin}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Make & Model</p>
+                    <p className="font-semibold text-gray-900">
+                      {submittedPermit.vehicleMake} {submittedPermit.vehicleModel}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Year</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.vehicleYear}</p>
+                  </div>
+                  {submittedPermit.vehicleColor && (
+                    <div>
+                      <p className="text-gray-600">Color</p>
+                      <p className="font-semibold text-gray-900">{submittedPermit.vehicleColor}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Insurance Information */}
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                  <FileText className="w-5 h-5 mr-2 text-orange-600" />
+                  Insurance Information
+                </h3>
+                <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Policy Number</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.insurancePolicy}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Carrier</p>
+                    <p className="font-semibold text-gray-900">{submittedPermit.insuranceCarrier}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Expiry Date</p>
+                    <p className="font-semibold text-gray-900">
+                      {new Date(submittedPermit.insuranceExpiry).toLocaleDateString()}
+                    </p>
+                  </div>
+                  {submittedPermit.insuranceCoverage && (
+                    <div>
+                      <p className="text-gray-600">Coverage Amount</p>
+                      <p className="font-semibold text-gray-900">{submittedPermit.insuranceCoverage}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Next Steps */}
+              <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
+                <h4 className="font-semibold text-blue-900 mb-2">Next Steps</h4>
+                <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                  <li>Your permit request is now pending review by TLC admin</li>
+                  <li>You will be notified once the admin reviews your application</li>
+                  <li>Please keep your contact information updated</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 p-6 rounded-b-2xl flex justify-end">
+              <button
+                onClick={closeModal}
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto p-6">
-        {/* Success Message */}
-        {success && (
+        {/* Success Message Banner (after modal is closed) */}
+        {success && !showModal && (
           <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 text-green-800 p-4 rounded-xl flex items-center shadow-lg">
             <CheckCircle className="w-6 h-6 mr-3 text-green-600" />
             <div>
@@ -231,58 +466,36 @@ export default function UserDashboard({ user, onLogout }) {
           <div className="flex mb-8 border-b-2 border-gray-200">
             <button
               onClick={() => setActiveTab('fleet')}
-              className={`flex-1 py-4 px-4 text-sm font-semibold transition-all relative ${
-                activeTab === 'fleet'
-                  ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
+              className={`flex-1 py-4 px-4 text-sm font-semibold transition-all relative ${activeTab === 'fleet' ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
             >
               <div className="flex items-center justify-center">
                 <Building className="w-5 h-5 mr-2" />
                 <span>Fleet Owner</span>
-                {completedTabs.fleet && (
-                  <CheckCircle className="w-5 h-5 ml-2 text-green-600" />
-                )}
+                {completedTabs.fleet && (<CheckCircle className="w-5 h-5 ml-2 text-green-600" />)}
               </div>
             </button>
             
             <button
               onClick={() => completedTabs.fleet && setActiveTab('driver')}
               disabled={!completedTabs.fleet}
-              className={`flex-1 py-4 px-4 text-sm font-semibold transition-all relative ${
-                activeTab === 'driver'
-                  ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50'
-                  : completedTabs.fleet
-                  ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  : 'text-gray-300 cursor-not-allowed bg-gray-50'
-              }`}
+              className={`flex-1 py-4 px-4 text-sm font-semibold transition-all relative ${activeTab === 'driver' ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50' : completedTabs.fleet ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-50' : 'text-gray-300 cursor-not-allowed bg-gray-50'}`}
             >
               <div className="flex items-center justify-center">
                 <User className="w-5 h-5 mr-2" />
                 <span>Driver & License</span>
-                {completedTabs.driver && (
-                  <CheckCircle className="w-5 h-5 ml-2 text-green-600" />
-                )}
+                {completedTabs.driver && (<CheckCircle className="w-5 h-5 ml-2 text-green-600" />)}
               </div>
             </button>
             
             <button
               onClick={() => completedTabs.driver && setActiveTab('vehicle')}
               disabled={!completedTabs.driver}
-              className={`flex-1 py-4 px-4 text-sm font-semibold transition-all relative ${
-                activeTab === 'vehicle'
-                  ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50'
-                  : completedTabs.driver
-                  ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                  : 'text-gray-300 cursor-not-allowed bg-gray-50'
-              }`}
+              className={`flex-1 py-4 px-4 text-sm font-semibold transition-all relative ${activeTab === 'vehicle' ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50' : completedTabs.driver ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-50' : 'text-gray-300 cursor-not-allowed bg-gray-50'}`}
             >
               <div className="flex items-center justify-center">
                 <Car className="w-5 h-5 mr-2" />
                 <span>Vehicle & Insurance</span>
-                {completedTabs.vehicle && (
-                  <CheckCircle className="w-5 h-5 ml-2 text-green-600" />
-                )}
+                {completedTabs.vehicle && (<CheckCircle className="w-5 h-5 ml-2 text-green-600" />)}
               </div>
             </button>
           </div>
@@ -298,97 +511,41 @@ export default function UserDashboard({ user, onLogout }) {
                   </h3>
                   <p className="text-sm text-gray-600">Provide details about the fleet owner and company</p>
                 </div>
-                
                 <div className="grid md:grid-cols-2 gap-6">
+                  {/* fields... same markup as earlier */}
+                  {/* (kept identical to your supplied code to avoid breaking UI) */}
+                  {/* --- Fleet Owner fields --- */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Fleet Owner Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="fleetOwnerName"
-                      value={formData.fleetOwnerName}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="Enter owner name"
-                    />
-                    {errors.fleetOwnerName && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.fleetOwnerName}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Fleet Owner Name *</label>
+                    <input type="text" name="fleetOwnerName" value={formData.fleetOwnerName} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="Enter owner name" />
+                    {errors.fleetOwnerName && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.fleetOwnerName}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      name="fleetOwnerEmail"
-                      value={formData.fleetOwnerEmail}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="owner@example.com"
-                    />
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <input type="email" name="fleetOwnerEmail" value={formData.fleetOwnerEmail} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="owner@example.com" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="fleetOwnerPhone"
-                      value={formData.fleetOwnerPhone}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="(555) 123-4567"
-                    />
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
+                    <input type="tel" name="fleetOwnerPhone" value={formData.fleetOwnerPhone} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="(555) 123-4567" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Company Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="fleetCompanyName"
-                      value={formData.fleetCompanyName}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="Company name"
-                    />
-                    {errors.fleetCompanyName && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.fleetCompanyName}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Company Name *</label>
+                    <input type="text" name="fleetCompanyName" value={formData.fleetCompanyName} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="Company name" />
+                    {errors.fleetCompanyName && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.fleetCompanyName}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Base Number *
-                    </label>
-                    <input
-                      type="text"
-                      name="baseNo"
-                      value={formData.baseNo}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="BASE-12345"
-                    />
-                    {errors.baseNo && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.baseNo}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Base Number *</label>
+                    <input type="text" name="baseNo" value={formData.baseNo} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="BASE-12345" />
+                    {errors.baseNo && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.baseNo}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Borough *
-                    </label>
-                    <select
-                      name="borough"
-                      value={formData.borough}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all"
-                    >
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Borough *</label>
+                    <select name="borough" value={formData.borough} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 transition-all">
                       <option value="Manhattan">Manhattan</option>
                       <option value="Brooklyn">Brooklyn</option>
                       <option value="Queens">Queens</option>
@@ -404,316 +561,136 @@ export default function UserDashboard({ user, onLogout }) {
             {activeTab === 'driver' && (
               <div className="space-y-6 animate-fadeIn">
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-xl border border-green-200">
-                  <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
-                    <User className="w-5 h-5 mr-2 text-green-600" />
-                    Driver & License Information
-                  </h3>
+                  <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center"><User className="w-5 h-5 mr-2 text-green-600" />Driver & License Information</h3>
                   <p className="text-sm text-gray-600">Provide driver details and license information</p>
                 </div>
-                
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Driver Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="driverName"
-                      value={formData.driverName}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="Enter driver name"
-                    />
-                    {errors.driverName && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.driverName}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Driver Name *</label>
+                    <input type="text" name="driverName" value={formData.driverName} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="Enter driver name" />
+                    {errors.driverName && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.driverName}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      License Number *
-                    </label>
-                    <input
-                      type="text"
-                      name="licenseNo"
-                      value={formData.licenseNo}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="LIC-123456"
-                    />
-                    {errors.licenseNo && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.licenseNo}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">License Number *</label>
+                    <input type="text" name="licenseNo" value={formData.licenseNo} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="LIC-123456" />
+                    {errors.licenseNo && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.licenseNo}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      License Expiry Date *
-                    </label>
-                    <input
-                      type="date"
-                      name="licenseExpiry"
-                      value={formData.licenseExpiry}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 transition-all"
-                    />
-                    {errors.licenseExpiry && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.licenseExpiry}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">License Expiry Date *</label>
+                    <input type="date" name="licenseExpiry" value={formData.licenseExpiry} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 transition-all" />
+                    {errors.licenseExpiry && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.licenseExpiry}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Driver Phone
-                    </label>
-                    <input
-                      type="tel"
-                      name="driverPhone"
-                      value={formData.driverPhone}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="(555) 123-4567"
-                    />
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Driver Phone</label>
+                    <input type="tel" name="driverPhone" value={formData.driverPhone} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="(555) 123-4567" />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Driver Email
-                    </label>
-                    <input
-                      type="email"
-                      name="driverEmail"
-                      value={formData.driverEmail}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="driver@example.com"
-                    />
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Driver Email</label>
+                    <input type="email" name="driverEmail" value={formData.driverEmail} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="driver@example.com" />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Vehicle Tab */}
+            {/* Vehicle Tab (kept unchanged) */}
             {activeTab === 'vehicle' && (
               <div className="space-y-6 animate-fadeIn">
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border border-purple-200">
-                  <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
-                    <Car className="w-5 h-5 mr-2 text-purple-600" />
-                    Vehicle Information
-                  </h3>
+                  <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center"><Car className="w-5 h-5 mr-2 text-purple-600" />Vehicle Information</h3>
                   <p className="text-sm text-gray-600">Provide vehicle details and specifications</p>
                 </div>
                 
                 <div className="grid md:grid-cols-2 gap-6">
+                  {/* fields same as provided — kept unchanged */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Plate Number *
-                    </label>
-                    <input
-                      type="text"
-                      name="vehiclePlate"
-                      value={formData.vehiclePlate}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="ABC1234"
-                    />
-                    {errors.vehiclePlate && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.vehiclePlate}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Plate Number *</label>
+                    <input type="text" name="vehiclePlate" value={formData.vehiclePlate} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="ABC1234" />
+                    {errors.vehiclePlate && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.vehiclePlate}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      VIN *
-                    </label>
-                    <input
-                      type="text"
-                      name="vehicleVin"
-                      value={formData.vehicleVin}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="1HGBH41JXMN109186"
-                    />
-                    {errors.vehicleVin && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.vehicleVin}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">VIN *</label>
+                    <input type="text" name="vehicleVin" value={formData.vehicleVin} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="1HGBH41JXMN109186" />
+                    {errors.vehicleVin && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.vehicleVin}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Make *
-                    </label>
-                    <input
-                      type="text"
-                      name="vehicleMake"
-                      value={formData.vehicleMake}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="Toyota"
-                    />
-                    {errors.vehicleMake && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.vehicleMake}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Make *</label>
+                    <input type="text" name="vehicleMake" value={formData.vehicleMake} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="Toyota" />
+                    {errors.vehicleMake && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.vehicleMake}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Model *
-                    </label>
-                    <input
-                      type="text"
-                      name="vehicleModel"
-                      value={formData.vehicleModel}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="Camry"
-                    />
-                    {errors.vehicleModel && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.vehicleModel}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Model *</label>
+                    <input type="text" name="vehicleModel" value={formData.vehicleModel} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="Camry" />
+                    {errors.vehicleModel && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.vehicleModel}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Year *
-                    </label>
-                    <input
-                      type="number"
-                      name="vehicleYear"
-                      value={formData.vehicleYear}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="2024"
-                    />
-                    {errors.vehicleYear && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.vehicleYear}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Year *</label>
+                    <input type="number" name="vehicleYear" value={formData.vehicleYear} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="2024" />
+                    {errors.vehicleYear && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.vehicleYear}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Color
-                    </label>
-                    <input
-                      type="text"
-                      name="vehicleColor"
-                      value={formData.vehicleColor}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="Black"
-                    />
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Color</label>
+                    <input type="text" name="vehicleColor" value={formData.vehicleColor} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="Black" />
                   </div>
                 </div>
 
                 <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-xl border border-orange-200 mt-8">
-                  <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center">
-                    <FileText className="w-5 h-5 mr-2 text-orange-600" />
-                    Insurance Information
-                  </h3>
+                  <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center"><FileText className="w-5 h-5 mr-2 text-orange-600" />Insurance Information</h3>
                   <p className="text-sm text-gray-600">Provide insurance coverage details</p>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Insurance Policy Number *
-                    </label>
-                    <input
-                      type="text"
-                      name="insurancePolicy"
-                      value={formData.insurancePolicy}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="POL-123456789"
-                    />
-                    {errors.insurancePolicy && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.insurancePolicy}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Insurance Policy Number *</label>
+                    <input type="text" name="insurancePolicy" value={formData.insurancePolicy} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="POL-123456789" />
+                    {errors.insurancePolicy && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.insurancePolicy}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Insurance Carrier *
-                    </label>
-                    <input
-                      type="text"
-                      name="insuranceCarrier"
-                      value={formData.insuranceCarrier}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-400 transition-all"
-                      placeholder="State Farm"
-                    />
-                    {errors.insuranceCarrier && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.insuranceCarrier}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Insurance Carrier *</label>
+                    <input type="text" name="insuranceCarrier" value={formData.insuranceCarrier} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-400 transition-all" placeholder="State Farm" />
+                    {errors.insuranceCarrier && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.insuranceCarrier}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Insurance Expiry Date *
-                    </label>
-                    <input
-                      type="date"
-                      name="insuranceExpiry"
-                      value={formData.insuranceExpiry}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 transition-all"
-                    />
-                    {errors.insuranceExpiry && (
-                      <p className="text-red-600 text-sm mt-1 font-medium">{errors.insuranceExpiry}</p>
-                    )}
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Insurance Expiry Date *</label>
+                    <input type="date" name="insuranceExpiry" value={formData.insuranceExpiry} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 transition-all" />
+                    {errors.insuranceExpiry && (<p className="text-red-600 text-sm mt-1 font-medium">{errors.insuranceExpiry}</p>)}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Coverage Amount
-                </label>
-                <input
-                  type="text"
-                  name="insuranceCoverage"
-                  value={formData.insuranceCoverage}
-                  onChange={handleChange}
-                  placeholder="$1,000,000"
-                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-400 transition-all"
-                />
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Coverage Amount</label>
+                    <input type="text" name="insuranceCoverage" value={formData.insuranceCoverage} onChange={handleChange} placeholder="$1,000,000" className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 placeholder-gray-400 transition-all" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between mt-10 pt-6 border-t-2 border-gray-200">
+              {activeTab !== 'fleet' && (
+                <button type="button" onClick={handleBack} className="px-8 py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl font-semibold hover:from-gray-200 hover:to-gray-300 transition-all shadow-md hover:shadow-lg transform hover:scale-105">← Back</button>
+              )}
+              
+              <div className={activeTab === 'fleet' ? 'ml-auto' : ''}>
+                {activeTab !== 'vehicle' ? (
+                  <button type="button" onClick={handleNext} className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">Next →</button>
+                ) : (
+                  <button type="submit" className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">Submit Request ✓</button>
+                )}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-between mt-10 pt-6 border-t-2 border-gray-200">
-          {activeTab !== 'fleet' && (
-            <button
-              type="button"
-              onClick={handleBack}
-              className="px-8 py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl font-semibold hover:from-gray-200 hover:to-gray-300 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
-            >
-              ← Back
-            </button>
-          )}
-          
-          <div className={activeTab === 'fleet' ? 'ml-auto' : ''}>
-            {activeTab !== 'vehicle' ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
-              >
-                Next →
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
-              >
-                Submit Request ✓
-              </button>
-            )}
-          </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
-  </div>
-</div>);
+  );
 }
