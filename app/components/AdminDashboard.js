@@ -252,6 +252,78 @@ export default function AdminDashboard({ user, onLogout }) {
 
 
 
+  // --- Permitmap & LocationMap states ---
+  const [permitHour, setPermitHour] = useState(0);
+  const [locationHour, setLocationHour] = useState(0);
+  const [permitShift, setPermitShift] = useState('0-8');
+  const [permitDaysRange, setPermitDaysRange] = useState(7);
+  const [permitFilters, setPermitFilters] = useState({
+    available: true,
+    booked: true,
+    holiday: true
+  });
+
+  // Shift hour ranges
+  const SHIFTS = [
+    { label: '0-8', start: 0, end: 7 },
+    { label: '8-16', start: 8, end: 15 },
+    { label: '16-23', start: 16, end: 23 }
+  ];
+
+  // Helper to get shift range
+  const getShiftRange = (shiftLabel) => {
+    const shift = SHIFTS.find(s => s.label === shiftLabel);
+    return shift ? [shift.start, shift.end] : [0, 7];
+  };
+
+  // Dates for permitmap tab
+  const permitMapDates = useMemo(() => getDatesRange(permitDaysRange, new Date(startDate)), [permitDaysRange, startDate]);
+
+  // Build permit heatmap matrix for shifts and filters
+  const permitMapMatrix = useMemo(() => {
+    const [shiftStart, shiftEnd] = getShiftRange(permitShift);
+    const matrix = {};
+    permits.forEach(p => {
+      if (!Array.isArray(p.schedule)) return;
+      matrix[p.id] = {};
+      permitMapDates.forEach(date => {
+        // Find all slots in the shift for this date
+        const slots = p.schedule.filter(s => s.date === date && s.hour >= shiftStart && s.hour <= shiftEnd);
+        // Count statuses
+        const statusCount = { available: 0, booked: 0, holiday: 0 };
+        slots.forEach(s => {
+          if (statusCount[s.status] !== undefined) statusCount[s.status]++;
+        });
+        // Determine display status based on filters and priority: booked > holiday > available
+        let displayStatus = null;
+        if (permitFilters.booked && statusCount.booked > 0) displayStatus = 'booked';
+        else if (permitFilters.holiday && statusCount.holiday > 0) displayStatus = 'holiday';
+        else if (permitFilters.available && statusCount.available > 0) displayStatus = 'available';
+        matrix[p.id][date] = displayStatus;
+      });
+    });
+    return matrix;
+  }, [permits, permitMapDates, permitShift, permitFilters]);
+
+  // --- LocationMap matrix ---
+  const locationMapMatrix = useMemo(() => {
+    const matrix = {};
+    permits.forEach(p => {
+      if (!Array.isArray(p.schedule)) return;
+      if (!matrix[p.baseNo]) matrix[p.baseNo] = {};
+      dates.forEach(date => {
+        if (!matrix[p.baseNo][date]) matrix[p.baseNo][date] = { booked: 0, available: 0, holiday: 0 };
+        const slot = p.schedule.find(s => s.date === date && s.hour === locationHour);
+        if (slot) {
+          if (matrix[p.baseNo][date][slot.status] !== undefined) {
+            matrix[p.baseNo][date][slot.status]++;
+          }
+        }
+      });
+    });
+    return matrix;
+  }, [permits, dates, locationHour]);
+
   // cycle status helper
   const cycleStatus = (s) => {
     const idx = STATUS_ORDER.indexOf(s);
@@ -364,7 +436,7 @@ export default function AdminDashboard({ user, onLogout }) {
         <div className="bg-white rounded-xl shadow mb-6">
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
-              {['overview', 'permits', 'heatmap', 'vehicles', 'drivers'].map(tab => (
+              {['overview', 'permits', 'heatmap', 'permitmap', 'locationMap', 'vehicles', 'drivers'].map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -844,6 +916,180 @@ export default function AdminDashboard({ user, onLogout }) {
                 </div>
 
 
+              </div>
+            )}
+
+            {/* Permitmap Tab */}
+            {activeTab === 'permitmap' && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">Permitmap</h2>
+                    <p className="text-sm text-gray-600">Shows slot status for each permit by shift.</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <label className="text-sm text-gray-600">Shift</label>
+                    <select
+                      value={permitShift}
+                      onChange={e => setPermitShift(e.target.value)}
+                      className="px-3 py-2 border text-black rounded"
+                    >
+                      {SHIFTS.map(s => (
+                        <option key={s.label} value={s.label}>{s.label.replace('-', ':00 - ') + ':00'}</option>
+                      ))}
+                    </select>
+                    <label className="text-sm text-gray-600">Days</label>
+                    <select
+                      value={permitDaysRange}
+                      onChange={e => setPermitDaysRange(Number(e.target.value))}
+                      className="px-3 py-2 border text-black rounded"
+                    >
+                      <option value={7}>7</option>
+                      <option value={14}>14</option>
+                      <option value={21}>21</option>
+                    </select>
+                    <div className="flex space-x-3">
+                      {["available", "booked", "holiday"].map(st => (
+                        <label key={st} className="flex items-center space-x-1 text-sm text-black">
+                          <input
+                            type="checkbox"
+                            checked={permitFilters[st]}
+                            onChange={() =>
+                              setPermitFilters(prev => ({ ...prev, [st]: !prev[st] }))
+                            }
+                          />
+                          <span className="capitalize">{st}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="overflow-x-auto border rounded-lg">
+                  <table className="border-collapse w-full">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="p-2 border text-xs sticky left-0 bg-gray-50 text-black">Permit</th>
+                        {permitMapDates.map(date => (
+                          <th key={date} className="p-2 border text-xs text-center text-black">{date}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {permits.map(p => (
+                        <tr key={p.id} className="hover:bg-gray-50 text-black">
+                          <td className="p-1 border text-xs font-semibold sticky left-0 bg-white">
+                            {p.driverName} <span className="text-xs text-gray-500">({p.vehiclePlate})</span>
+                          </td>
+                          {permitMapDates.map(date => {
+                            const status = permitMapMatrix[p.id][date];
+                            return (
+                              <td key={date} className={`w-16 h-10 border text-center`}>
+                                {status ? (
+                                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${STATUS_COLOR[status]}`}>
+                                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-gray-400">-</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex items-center space-x-4 mt-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-4 h-4 bg-green-200 rounded-sm inline-block" />
+                    <span className="text-sm text-black">Available</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-4 h-4 bg-red-500 rounded-sm inline-block" />
+                    <span className="text-sm text-black">Booked</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-4 h-4 bg-blue-500 rounded-sm inline-block" />
+                    <span className="text-sm text-black">Holiday</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* LocationMap Tab */}
+            {activeTab === 'locationMap' && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">LocationMap</h2>
+                    <p className="text-sm text-gray-600">Shows slot status for each base location at selected hour.</p>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <label className="text-sm text-gray-600">Hour</label>
+                    <select
+                      value={locationHour}
+                      onChange={e => setLocationHour(Number(e.target.value))}
+                      className="px-3 py-2 border text-black rounded"
+                    >
+                      {[...Array(24).keys()].map(h => (
+                        <option key={h} value={h}>{h}:00</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="overflow-x-auto border rounded-lg">
+                  <table className="border-collapse w-full">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="p-2 border text-xs sticky left-0 bg-gray-50 text-black">Base No</th>
+                        {dates.map(date => (
+                          <th key={date} className="p-2 border text-xs text-center text-black">{date}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.keys(locationMapMatrix).map(baseNo => (
+                        <tr key={baseNo} className="hover:bg-gray-50 text-black">
+                          <td className="p-1 border text-xs font-semibold sticky left-0 bg-white">
+                            {baseNo}
+                          </td>
+                          {dates.map(date => {
+                            const cell = locationMapMatrix[baseNo][date] || { booked: 0, available: 0, holiday: 0 };
+                            return (
+                              <td key={date} className="w-16 h-10 border text-center">
+                                <div className="flex flex-col items-center space-y-1">
+                                  <span className="text-xs font-semibold text-green-700 bg-green-200 rounded px-1">
+                                    {cell.available} Avail
+                                  </span>
+                                  <span className="text-xs font-semibold text-red-700 bg-red-500 rounded px-1">
+                                    {cell.booked} Booked
+                                  </span>
+                                  <span className="text-xs font-semibold text-blue-700 bg-blue-500 rounded px-1">
+                                    {cell.holiday} Holiday
+                                  </span>
+                                </div>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex items-center space-x-4 mt-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-4 h-4 bg-green-200 rounded-sm inline-block" />
+                    <span className="text-sm text-black">Available</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-4 h-4 bg-red-500 rounded-sm inline-block" />
+                    <span className="text-sm text-black">Booked</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="w-4 h-4 bg-blue-500 rounded-sm inline-block" />
+                    <span className="text-sm text-black">Holiday</span>
+                  </div>
+                </div>
               </div>
             )}
 
