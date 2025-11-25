@@ -3,11 +3,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Building, FileText, Car, User, Clock, CheckCircle, XCircle, AlertCircle, TrendingUp } from 'lucide-react';
 import { storage } from '../utils/storage';
+import TLCAdminDashboard from "@/app/components/TLCAdminDashboard";
 
 const STATUS_ORDER = ['available', 'booked', 'cancelled', 'holiday'];
 const STATUS_COLOR = {
   available: 'bg-green-200',
-  booked: 'bg-red-500',
+  booked: 'b    g-red-500',
   cancelled: 'bg-yellow-400',
   holiday: 'bg-blue-500'
 };
@@ -945,41 +946,39 @@ export default function AdminDashboard({ user, onLogout }) {
                 </div>
 
                 {/* HEATMAP TABLE */}
-                <div className="overflow-x-auto border rounded-lg">
+                <div className="overflow-x-auto border rounded-2xl shadow-lg bg-gradient-to-br from-blue-50 via-white to-green-50">
                   <table className="border-collapse w-full">
                     <thead>
-                      <tr className="bg-gray-50">
-                        <th className="p-2 border text-xs sticky left-0 bg-gray-50 text-black">Hour</th>
-
+                      <tr className="bg-gradient-to-r from-blue-200 via-green-100 to-purple-100 shadow">
+                        <th className="p-3 border text-xs sticky left-0 bg-gradient-to-r from-blue-200 to-blue-50 text-black font-bold z-10 rounded-tl-2xl shadow">
+                          Hour
+                        </th>
                         {dates.map(date => (
                           <th
                             key={date}
-                            className="p-2 border text-xs text-center text-black"
+                            className="p-3 border text-xs text-center text-black font-bold bg-gradient-to-r from-blue-100 to-green-50 shadow"
                           >
                             {date}
                           </th>
                         ))}
                       </tr>
                     </thead>
-
                     <tbody>
                       {[0, 8, 16].map(hour => (
-                        <tr key={hour} className="hover:bg-gray-50 text-black">
-
+                        <tr key={hour} className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-green-50 text-black transition-all duration-150">
                           {/* Hour label */}
-                          <td className="p-1 border text-xs font-semibold sticky left-0 bg-white">
+                          <td className="p-2 border text-xs font-semibold sticky left-0 bg-gradient-to-r from-blue-50 to-white rounded-l-2xl shadow z-10">
                             {hour}:00 - {hour + 8}:00
                           </td>
-
                           {dates.map(date => {
                             const cell = filteredHeatmapMatrix[date][hour];
                             return (
                               <td
                                 key={`${date}-${hour}`}
-                                className="w-20 h-16 border relative cursor-pointer bg-white"
+                                className="w-24 h-20 border relative cursor-pointer bg-white rounded-xl shadow hover:ring-2 hover:ring-blue-400 transition-all duration-150"
                                 onClick={() => handleCellClick(date, hour)}
                               >
-                                <div className="absolute inset-0 flex flex-wrap p-1 gap-1">
+                                <div className="absolute inset-0 flex flex-wrap p-2 gap-2 justify-center items-center">
                                   {Object.entries(cell)
                                     .filter(([status, arr]) =>
                                       arr.length > 0 &&
@@ -990,7 +989,7 @@ export default function AdminDashboard({ user, onLogout }) {
                                     .flatMap(([status, arr]) =>
                                       arr.map((info, i) => (
                                         <div key={`${status}-${i}`} className="relative group">
-                                          {/* Use a circle icon for the dot */}
+                                          {/* Dot with enhanced style */}
                                           <span
                                             onClick={e => {
                                               e.stopPropagation();
@@ -1003,15 +1002,19 @@ export default function AdminDashboard({ user, onLogout }) {
                                                 hour
                                               });
                                             }}
-                                            className={`flex items-center justify-center w-5 h-5 rounded-full border border-black/30 cursor-pointer ${STATUS_COLOR[status]}`}
+                                            className={`flex items-center justify-center w-8 h-8 rounded-full border-2 border-white shadow-lg cursor-pointer ${STATUS_COLOR[status]} group-hover:ring-2 group-hover:ring-blue-500 transition-all duration-150`}
                                             title={`${info.driverName} (${status})`}
+                                            style={{
+                                              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                                              filter: 'drop-shadow(0 0 4px #60a5fa)'
+                                            }}
                                           >
-                                            <svg width="14" height="14" viewBox="0 0 14 14" className="block">
-                                              <circle cx="7" cy="7" r="6" fill="currentColor" />
+                                            <svg width="18" height="18" viewBox="0 0 18 18" className="block">
+                                              <circle cx="9" cy="9" r="7" fill="currentColor" />
                                             </svg>
                                           </span>
                                           {/* Elegant tooltip on hover */}
-                                          <div className="absolute z-10 left-6 top-0 hidden group-hover:flex flex-col min-w-[220px] bg-white border border-gray-200 shadow-lg rounded-lg p-3 text-xs text-black"
+                                          <div className="absolute z-10 left-10 top-0 hidden group-hover:flex flex-col min-w-[220px] bg-white border border-gray-200 shadow-xl rounded-xl p-3 text-xs text-black"
                                             style={{ pointerEvents: 'none' }}
                                           >
                                             <div className="font-bold text-blue-700 mb-1">{info.driverName}</div>
@@ -1029,23 +1032,21 @@ export default function AdminDashboard({ user, onLogout }) {
                               </td>
                             );
                           })}
-
                         </tr>
                       ))}
                     </tbody>
-
                   </table>
                 </div>
 
                 {/* LEGEND */}
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-4 mt-4">
                   <div className="flex items-center space-x-2">
-                    <span className="w-4 h-4 bg-red-500 rounded-sm inline-block" />
-                    <span className="text-sm text-black">Booked</span>
+                    <span className="w-8 h-4 bg-red-500 rounded-full shadow inline-block border-2 border-white" />
+                    <span className="text-sm text-black font-semibold px-2 py-1 rounded-full bg-red-100 shadow">Booked</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="w-4 h-4 bg-blue-500 rounded-sm inline-block" />
-                    <span className="text-sm text-black">Holiday</span>
+                    <span className="w-8 h-4 bg-blue-500 rounded-full shadow inline-block border-2 border-white" />
+                    <span className="text-sm text-black font-semibold px-2 py-1 rounded-full bg-blue-100 shadow">Holiday</span>
                   </div>
                 </div>
 
