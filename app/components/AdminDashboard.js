@@ -466,14 +466,14 @@ export default function AdminDashboard({ user, onLogout }) {
   }, [drivers, driverSearchLicense, driverSearchName, driverSearchQR]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
       {/* Navigation Bar */}
-      <nav className="bg-white shadow-sm rounded-b-xl mb-2">
+      <nav className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-extrabold text-blue-800 tracking-wide drop-shadow">TLC Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">TLC Admin Dashboard</h1>
           <button
             onClick={onLogout}
-            className="px-4 py-2 text-sm text-white bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600 rounded-lg shadow transition-colors font-semibold"
+            className="px-4 py-2 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-md transition-all font-semibold"
           >
             Logout
           </button>
@@ -539,11 +539,10 @@ export default function AdminDashboard({ user, onLogout }) {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`py-4 px-1 border-b-2 font-semibold text-sm transition-all duration-150 ${
-                    activeTab === tab
+                  className={`py-4 px-1 border-b-2 font-semibold text-sm transition-all duration-150 ${activeTab === tab
                       ? 'border-blue-500 text-blue-700 bg-gradient-to-r from-blue-100 to-green-100 shadow'
                       : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-300'
-                  }`}
+                    }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
@@ -1233,67 +1232,65 @@ export default function AdminDashboard({ user, onLogout }) {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="min-w-full border-separate border-spacing-y-2">
-          <thead>
-            <tr className="bg-gradient-to-r from-blue-100 via-green-100 to-purple-100">
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase rounded-tl-lg shadow-sm">Plate</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">VIN</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Make/Model</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Year</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Driver Name</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">License #</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Driver Status</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Permit Expiry</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Violations</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase rounded-tr-lg shadow-sm">Permit Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredVehiclesList.map((vehicle, index) => {
-              const driverInfo = getDriverInfoForVehicle(vehicle.plate);
-              return (
-                <tr key={index} className="bg-white hover:bg-blue-50 transition-shadow shadow rounded-lg">
-                  <td className="px-6 py-3 text-sm font-semibold text-blue-900">{vehicle.plate}</td>
-                  <td className="px-6 py-3 text-sm text-purple-900">{vehicle.vin}</td>
-                  <td className="px-6 py-3 text-sm text-gray-800">{vehicle.make} <span className="font-semibold">{vehicle.model}</span></td>
-                  <td className="px-6 py-3 text-sm text-gray-700">{vehicle.year}</td>
-                  <td className="px-6 py-3 text-sm text-green-900 font-semibold">{driverInfo.name || '-'}</td>
-                  <td className="px-6 py-3 text-sm text-blue-900">{driverInfo.licenseNo || '-'}</td>
-                  <td className="px-6 py-3 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold shadow ${
-                      driverInfo.driverStatus === 'ACTIVE' ? 'bg-green-200 text-green-800 border border-green-400'
-                      : driverInfo.driverStatus === 'SUSPENDED' ? 'bg-yellow-200 text-yellow-800 border border-yellow-400'
-                      : 'bg-red-200 text-red-800 border border-red-400'
-                    }`}>
-                      {driverInfo.driverStatus}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 text-sm text-gray-900">
-                    {driverInfo.permitExpiry || '-'}
-                  </td>
-                  <td className="px-6 py-3 text-sm">
-                    {driverInfo.violations && driverInfo.violations.length > 0 ? (
-                      <span className="px-2 py-1 rounded bg-red-100 text-red-700 font-semibold shadow">
-                        {driverInfo.violations.join(', ')}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-3 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold shadow ${
-                      vehicle.status === 'approved' ? 'bg-green-100 text-green-700 border border-green-400'
-                      : vehicle.status === 'pending' ? 'bg-orange-100 text-orange-700 border border-orange-400'
-                      : 'bg-red-100 text-red-700 border border-red-400'
-                    }`}>
-                      {vehicle.status.charAt(0).toUpperCase() + vehicle.status.slice(1)}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                      <thead>
+                        <tr className="bg-gradient-to-r from-blue-100 via-green-100 to-purple-100">
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase rounded-tl-lg shadow-sm">Plate</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">VIN</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Make/Model</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Year</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Driver Name</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">License #</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Driver Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Permit Expiry</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Violations</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase rounded-tr-lg shadow-sm">Permit Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredVehiclesList.map((vehicle, index) => {
+                          const driverInfo = getDriverInfoForVehicle(vehicle.plate);
+                          return (
+                            <tr key={index} className="bg-white hover:bg-blue-50 transition-shadow shadow rounded-lg">
+                              <td className="px-6 py-3 text-sm font-semibold text-blue-900">{vehicle.plate}</td>
+                              <td className="px-6 py-3 text-sm text-purple-900">{vehicle.vin}</td>
+                              <td className="px-6 py-3 text-sm text-gray-800">{vehicle.make} <span className="font-semibold">{vehicle.model}</span></td>
+                              <td className="px-6 py-3 text-sm text-gray-700">{vehicle.year}</td>
+                              <td className="px-6 py-3 text-sm text-green-900 font-semibold">{driverInfo.name || '-'}</td>
+                              <td className="px-6 py-3 text-sm text-blue-900">{driverInfo.licenseNo || '-'}</td>
+                              <td className="px-6 py-3 text-sm">
+                                <span className={`px-2 py-1 rounded-full text-xs font-bold shadow ${driverInfo.driverStatus === 'ACTIVE' ? 'bg-green-200 text-green-800 border border-green-400'
+                                    : driverInfo.driverStatus === 'SUSPENDED' ? 'bg-yellow-200 text-yellow-800 border border-yellow-400'
+                                      : 'bg-red-200 text-red-800 border border-red-400'
+                                  }`}>
+                                  {driverInfo.driverStatus}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3 text-sm text-gray-900">
+                                {driverInfo.permitExpiry || '-'}
+                              </td>
+                              <td className="px-6 py-3 text-sm">
+                                {driverInfo.violations && driverInfo.violations.length > 0 ? (
+                                  <span className="px-2 py-1 rounded bg-red-100 text-red-700 font-semibold shadow">
+                                    {driverInfo.violations.join(', ')}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400">-</span>
+                                )}
+                              </td>
+                              <td className="px-6 py-3 text-sm">
+                                <span className={`px-2 py-1 rounded-full text-xs font-bold shadow ${vehicle.status === 'approved' ? 'bg-green-100 text-green-700 border border-green-400'
+                                    : vehicle.status === 'pending' ? 'bg-orange-100 text-orange-700 border border-orange-400'
+                                      : 'bg-red-100 text-red-700 border border-red-400'
+                                  }`}>
+                                  {vehicle.status.charAt(0).toUpperCase() + vehicle.status.slice(1)}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             )}
@@ -1349,63 +1346,62 @@ export default function AdminDashboard({ user, onLogout }) {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="min-w-full border-separate border-spacing-y-2">
-          <thead>
-            <tr className="bg-gradient-to-r from-blue-100 via-green-100 to-purple-100">
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase rounded-tl-lg shadow-sm">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">License No</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">License Expiry</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Phone</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase rounded-tr-lg shadow-sm">Violations</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredDrivers.map((d, i) => {
-              // Find permit for this driver to get extra info
-              const permit = permits.find(p => p.licenseNo === d.licenseNo);
-              const expiry = permit && permit.licenseExpiry
-                ? new Date(permit.licenseExpiry).toLocaleDateString()
-                : '-';
-              const phone = permit && permit.driverPhone ? permit.driverPhone : '-';
-              const email = permit && permit.driverEmail ? permit.driverEmail : '-';
-              let driverStatus = 'ACTIVE';
-              if (permit && permit.licenseExpiry && new Date(permit.licenseExpiry) < new Date()) driverStatus = 'EXPIRED';
-              if (permit && permit.driverSuspended) driverStatus = 'SUSPENDED';
-              const violations = permit && permit.violations && permit.violations.length > 0
-                ? permit.violations.join(', ')
-                : '-';
-              return (
-                <tr key={i} className="bg-white hover:bg-blue-50 transition-shadow shadow rounded-lg">
-                  <td className="px-6 py-3 text-sm font-semibold text-green-900">{d.name}</td>
-                  <td className="px-6 py-3 text-sm text-blue-900">{d.licenseNo}</td>
-                  <td className="px-6 py-3 text-sm text-purple-900">{expiry}</td>
-                  <td className="px-6 py-3 text-sm text-gray-900">{phone}</td>
-                  <td className="px-6 py-3 text-sm text-gray-900">{email}</td>
-                  <td className="px-6 py-3 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold shadow ${
-                      driverStatus === 'ACTIVE' ? 'bg-green-200 text-green-800 border border-green-400'
-                      : driverStatus === 'SUSPENDED' ? 'bg-yellow-200 text-yellow-800 border border-yellow-400'
-                      : 'bg-red-200 text-red-800 border border-red-400'
-                    }`}>
-                      {driverStatus}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 text-sm">
-                    {violations !== '-' ? (
-                      <span className="px-2 py-1 rounded bg-red-100 text-red-700 font-semibold shadow">
-                        {violations}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                      <thead>
+                        <tr className="bg-gradient-to-r from-blue-100 via-green-100 to-purple-100">
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase rounded-tl-lg shadow-sm">Name</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">License No</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">License Expiry</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Phone</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Email</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase shadow-sm">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase rounded-tr-lg shadow-sm">Violations</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredDrivers.map((d, i) => {
+                          // Find permit for this driver to get extra info
+                          const permit = permits.find(p => p.licenseNo === d.licenseNo);
+                          const expiry = permit && permit.licenseExpiry
+                            ? new Date(permit.licenseExpiry).toLocaleDateString()
+                            : '-';
+                          const phone = permit && permit.driverPhone ? permit.driverPhone : '-';
+                          const email = permit && permit.driverEmail ? permit.driverEmail : '-';
+                          let driverStatus = 'ACTIVE';
+                          if (permit && permit.licenseExpiry && new Date(permit.licenseExpiry) < new Date()) driverStatus = 'EXPIRED';
+                          if (permit && permit.driverSuspended) driverStatus = 'SUSPENDED';
+                          const violations = permit && permit.violations && permit.violations.length > 0
+                            ? permit.violations.join(', ')
+                            : '-';
+                          return (
+                            <tr key={i} className="bg-white hover:bg-blue-50 transition-shadow shadow rounded-lg">
+                              <td className="px-6 py-3 text-sm font-semibold text-green-900">{d.name}</td>
+                              <td className="px-6 py-3 text-sm text-blue-900">{d.licenseNo}</td>
+                              <td className="px-6 py-3 text-sm text-purple-900">{expiry}</td>
+                              <td className="px-6 py-3 text-sm text-gray-900">{phone}</td>
+                              <td className="px-6 py-3 text-sm text-gray-900">{email}</td>
+                              <td className="px-6 py-3 text-sm">
+                                <span className={`px-2 py-1 rounded-full text-xs font-bold shadow ${driverStatus === 'ACTIVE' ? 'bg-green-200 text-green-800 border border-green-400'
+                                    : driverStatus === 'SUSPENDED' ? 'bg-yellow-200 text-yellow-800 border border-yellow-400'
+                                      : 'bg-red-200 text-red-800 border border-red-400'
+                                  }`}>
+                                  {driverStatus}
+                                </span>
+                              </td>
+                              <td className="px-6 py-3 text-sm">
+                                {violations !== '-' ? (
+                                  <span className="px-2 py-1 rounded bg-red-100 text-red-700 font-semibold shadow">
+                                    {violations}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400">-</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             )}

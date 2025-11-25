@@ -199,16 +199,16 @@ export default function UserDashboard({ user, onLogout }) {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-            <nav className="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
+            <nav className="bg-white border-b border-slate-200 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                     <div>
-                        <h1 className="text-2xl font-bold text-white">TLC Permit Registry</h1>
-                        <p className="text-blue-100 text-sm">User Portal</p>
+                        <h1 className="text-2xl font-bold text-slate-900">TLC Permit Registry</h1>
+                        <p className="text-slate-600 text-sm">User Portal</p>
                     </div>
                     <button
                         onClick={onLogout}
-                        className="px-4 py-2 text-sm text-black bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors backdrop-blur-sm"
+                        className="px-4 py-2 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-md transition-all font-semibold"
                     >
                         Logout
                     </button>
@@ -218,7 +218,7 @@ export default function UserDashboard({ user, onLogout }) {
             <div className="max-w-7xl mx-auto px-4 mt-6 flex justify-end">
                 <a
                     href="/schedule"
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all flex items-center gap-2"
+                    className="px-6 py-3 rounded-lg bg-slate-900 text-white font-semibold shadow-md hover:bg-slate-800 transition-all flex items-center gap-2"
                 >
                     <Calendar className="w-5 h-5 text-white" />
                     Manage Schedule
@@ -253,8 +253,8 @@ export default function UserDashboard({ user, onLogout }) {
                                     <div>
                                         <p className="text-gray-600">Status</p>
                                         <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                      PENDING
-                    </span>
+                                            PENDING
+                                        </span>
                                     </div>
                                     <div>
                                         <p className="text-gray-600">Submitted By</p>
@@ -476,11 +476,11 @@ export default function UserDashboard({ user, onLogout }) {
                             disabled={!completedTabs.vehicle}
                             className={`flex-1 py-4 px-4 text-sm font-semibold transition-all relative ${activeTab === 'payment' ? 'text-blue-600 border-b-3 border-blue-600 bg-blue-50' : completedTabs.vehicle ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-50' : 'text-gray-300 cursor-not-allowed bg-gray-50'}`}
                         >
-              <span className="flex items-center justify-center">
-                <Shield className="w-5 h-5 mr-2" />
-                Payment
-                  {completedTabs.payment && (<CheckCircle className="w-5 h-5 ml-2 text-green-600" />)}
-              </span>
+                            <span className="flex items-center justify-center">
+                                <Shield className="w-5 h-5 mr-2" />
+                                Payment
+                                {completedTabs.payment && (<CheckCircle className="w-5 h-5 ml-2 text-green-600" />)}
+                            </span>
                         </button>
                     </div>
 

@@ -113,147 +113,194 @@ export default function AdminConfiguration() {
     };
 
     return (
-        <div className="min-h-screen flex bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-gray-50 to-slate-100">
 
             <div className="flex-1 flex flex-col">
                 {/* NAVBAR */}
-                <nav className="bg-white shadow-sm px-6 py-4 flex items-center justify-end">
-                    <span className="font-bold text-blue-700">Admin / Rules & Configuration</span>
-                </nav>
-                {/* HEADER */}
-                <header className="bg-white shadow flex items-center gap-4 px-8 py-6 justify-between">
-                    <Settings className="w-8 h-8 text-indigo-600" />
-                    <div className="text-xl font-bold">Rules Configuration</div>
+                <nav className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <Settings className="w-6 h-6 text-slate-700" />
+                        <span className="font-bold text-slate-900 text-xl">Rules & Configuration</span>
+                    </div>
                     <div className="flex gap-2">
-                        <button className="bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded" onClick={handleResetDefaults}>Reset Defaults</button>
-                        <button className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-white" onClick={() => saveConfig()}>Save All</button>
+                        <button
+                            className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition-all"
+                            onClick={handleResetDefaults}
+                        >
+                            Reset Defaults
+                        </button>
+                        <button
+                            className="px-4 py-2 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all shadow-md"
+                            onClick={() => saveConfig()}
+                        >
+                            Save All
+                        </button>
                     </div>
-                </header>
-                <main className="flex-1 p-8 space-y-8">
-                    {/* STATUS CODES */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Scale className="w-6 h-6 text-blue-500" />
-                            <span className="font-bold text-lg">Status Codes</span>
-                        </div>
-                        <ul className="mb-4">
-                            {statusCodes.map((code, idx) => (
-                                <li key={idx} className="flex items-center gap-2 mb-2">
-                                    {editIdx === idx ? (
-                                        <>
-                                            <input
-                                                className="border rounded px-2 py-1"
-                                                value={editValue}
-                                                onChange={e => setEditValue(e.target.value)}
-                                            />
-                                            <button className="text-green-600" onClick={() => handleSaveEditStatus(idx)}>
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span className="font-semibold">{code}</span>
-                                            <button className="text-blue-600" onClick={() => handleEditStatus(idx)}>
-                                                <Edit className="w-4 h-4" />
-                                            </button>
-                                        </>
-                                    )}
-                                    <button className="text-red-600" onClick={() => handleDeleteStatus(idx)}>
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
-                        <div className="flex gap-2">
-                            <input
-                                className="border rounded px-2 py-1"
-                                placeholder="Add Status Code"
-                                value={newStatus}
-                                onChange={e => setNewStatus(e.target.value)}
-                            />
-                            <button className="bg-blue-600 text-white px-3 py-1 rounded" onClick={handleAddStatus}>
-                                <Plus className="w-4 h-4 inline" /> Add
-                            </button>
-                        </div>
-                    </div>
-                    {/* JURISDICTION RULES */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Scale className="w-6 h-6 text-green-500" />
-                            <span className="font-bold text-lg">Jurisdiction Rules</span>
-                        </div>
-                        <table className="w-full mb-4">
-                            <thead>
-                                <tr>
-                                    <th className="text-left py-1">Borough</th>
-                                    <th className="text-left py-1">Max Utilization</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {boroughRules.map((rule, idx) => (
-                                    <tr key={idx}>
-                                        <td className="py-1">{rule.borough}</td>
-                                        <td className="py-1">{rule.maxUtilization}</td>
-                                        <td>
-                                            <button className="text-red-600" onClick={() => handleDeleteBoroughRule(idx)}>
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </td>
-                                    </tr>
+                </nav>
+
+                <main className="flex-1 p-6 md:p-12">
+                    <div className="max-w-7xl mx-auto space-y-6">
+                        {/* STATUS CODES */}
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-blue-100 rounded-lg">
+                                    <Scale className="w-6 h-6 text-blue-600" />
+                                </div>
+                                <span className="font-bold text-xl text-slate-900">Status Codes</span>
+                            </div>
+                            <ul className="mb-6 space-y-3">
+                                {statusCodes.map((code, idx) => (
+                                    <li key={idx} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                        {editIdx === idx ? (
+                                            <>
+                                                <input
+                                                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                                    value={editValue}
+                                                    onChange={e => setEditValue(e.target.value)}
+                                                />
+                                                <button
+                                                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                    onClick={() => handleSaveEditStatus(idx)}
+                                                >
+                                                    <Edit className="w-5 h-5" />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="flex-1 font-semibold text-slate-900">{code}</span>
+                                                <button
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    onClick={() => handleEditStatus(idx)}
+                                                >
+                                                    <Edit className="w-5 h-5" />
+                                                </button>
+                                            </>
+                                        )}
+                                        <button
+                                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            onClick={() => handleDeleteStatus(idx)}
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </li>
                                 ))}
-                            </tbody>
-                        </table>
-                        <div className="flex gap-2">
-                            <input
-                                className="border rounded px-2 py-1"
-                                placeholder="Borough"
-                                value={newBorough}
-                                onChange={e => setNewBorough(e.target.value)}
-                            />
-                            <input
-                                className="border rounded px-2 py-1"
-                                placeholder="Max Utilization"
-                                type="number"
-                                value={newLimit}
-                                onChange={e => setNewLimit(e.target.value)}
-                            />
-                            <button className="bg-green-600 text-white px-3 py-1 rounded" onClick={handleAddBoroughRule}>
-                                <Plus className="w-4 h-4 inline" /> Add
-                            </button>
+                            </ul>
+                            <div className="flex gap-3">
+                                <input
+                                    className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                    placeholder="Add Status Code"
+                                    value={newStatus}
+                                    onChange={e => setNewStatus(e.target.value)}
+                                />
+                                <button
+                                    className="px-4 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md flex items-center gap-2"
+                                    onClick={handleAddStatus}
+                                >
+                                    <Plus className="w-5 h-5" /> Add
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                    {/* GOVERNANCE CONTROLS */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Scale className="w-6 h-6 text-indigo-500" />
-                            <span className="font-bold text-lg">Governance Controls</span>
+
+                        {/* JURISDICTION RULES */}
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-emerald-100 rounded-lg">
+                                    <Scale className="w-6 h-6 text-emerald-600" />
+                                </div>
+                                <span className="font-bold text-xl text-slate-900">Jurisdiction Rules</span>
+                            </div>
+                            <div className="overflow-x-auto mb-6">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-slate-200">
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">Borough</th>
+                                            <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">Max Utilization</th>
+                                            <th className="py-3 px-4"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {boroughRules.map((rule, idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                                <td className="py-3 px-4 font-medium text-slate-900">{rule.borough}</td>
+                                                <td className="py-3 px-4 text-slate-700">{rule.maxUtilization}</td>
+                                                <td className="py-3 px-4 text-right">
+                                                    <button
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        onClick={() => handleDeleteBoroughRule(idx)}
+                                                    >
+                                                        <Trash2 className="w-5 h-5" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="flex gap-3">
+                                <input
+                                    className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                    placeholder="Borough"
+                                    value={newBorough}
+                                    onChange={e => setNewBorough(e.target.value)}
+                                />
+                                <input
+                                    className="w-40 px-4 py-2.5 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                    placeholder="Max Utilization"
+                                    type="number"
+                                    value={newLimit}
+                                    onChange={e => setNewLimit(e.target.value)}
+                                />
+                                <button
+                                    className="px-4 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2"
+                                    onClick={handleAddBoroughRule}
+                                >
+                                    <Plus className="w-5 h-5" /> Add
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <span>Compliance Thresholds:</span>
-                            {editThreshold ? (
-                                <>
-                                    <input
-                                        className="border rounded px-2 py-1 w-20"
-                                        type="number"
-                                        value={complianceThreshold}
-                                        onChange={e => setComplianceThreshold(Number(e.target.value))}
-                                    />
-                                    <button className="bg-blue-600 text-white px-3 py-1 rounded" onClick={handleSaveThreshold}>
-                                        Save
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="font-semibold">{complianceThreshold}%</span>
-                                    <button className="text-blue-600" onClick={() => setEditThreshold(true)}>
-                                        <Edit className="w-4 h-4" />
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                        <div className="mt-4">
-                            <button className="bg-indigo-600 text-white px-4 py-2 rounded">Edit Cap Settings</button>
+
+                        {/* GOVERNANCE CONTROLS */}
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-indigo-100 rounded-lg">
+                                    <Scale className="w-6 h-6 text-indigo-600" />
+                                </div>
+                                <span className="font-bold text-xl text-slate-900">Governance Controls</span>
+                            </div>
+                            <div className="flex items-center gap-4 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                <span className="font-medium text-slate-700">Compliance Thresholds:</span>
+                                {editThreshold ? (
+                                    <>
+                                        <input
+                                            className="w-24 px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                            type="number"
+                                            value={complianceThreshold}
+                                            onChange={e => setComplianceThreshold(Number(e.target.value))}
+                                        />
+                                        <button
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md"
+                                            onClick={handleSaveThreshold}
+                                        >
+                                            Save
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="font-bold text-slate-900 text-lg">{complianceThreshold}%</span>
+                                        <button
+                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            onClick={() => setEditThreshold(true)}
+                                        >
+                                            <Edit className="w-5 h-5" />
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                            <div>
+                                <button className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all shadow-md">
+                                    Edit Cap Settings
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </main>
