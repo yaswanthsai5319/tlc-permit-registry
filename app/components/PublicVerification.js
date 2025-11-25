@@ -1,24 +1,19 @@
-import React, { useState } from "react";
-import { ShieldCheck, XCircle } from "lucide-react";
-
-const mockResults = {
-    "D12345": {
-        type: "Driver",
-        status: "ACTIVE",
-        updated: "2024-06-25 14:32",
-    },
-    "V67890": {
-        type: "Vehicle",
-        status: "EXPIRED",
-        updated: "2024-06-20 09:15",
-    },
-};
+"use client";
+import React, { useState, useEffect } from "react";
+import { ShieldCheck, XCircle, Search } from "lucide-react";
+import { storage } from '@/app/utils/storage';
 
 export default function PublicVerification() {
     const [licenseId, setLicenseId] = useState("");
     const [captcha, setCaptcha] = useState("");
     const [result, setResult] = useState(null);
     const [error, setError] = useState("");
+    const [permits, setPermits] = useState([]);
+
+    useEffect(() => {
+        const stored = storage.get('permits') || [];
+        setPermits(stored);
+    }, []);
 
     const handleVerify = e => {
         e.preventDefault();
@@ -33,11 +28,24 @@ export default function PublicVerification() {
             setResult(null);
             return;
         }
-        const res = mockResults[licenseId.trim()];
-        if (res) {
-            setResult(res);
+        const id = licenseId.trim();
+        // try to find a permit by licenseNo or vehiclePlate or id
+        const found = permits.find(p => p.licenseNo === id || p.vehiclePlate === id || p.id === id);
+        if (found) {
+            const type = found.licenseNo === id ? 'Driver' : (found.vehiclePlate === id ? 'Vehicle' : 'Permit');
+            setResult({
+                type,
+                status: found.status || 'N/A',
+                updated: found.approvedAt || found.submittedAt || found.insuranceExpiry || 'Unknown',
+                driverName: found.driverName,
+                licenseNo: found.licenseNo,
+                vehiclePlate: found.vehiclePlate,
+                borough: found.borough,
+                licenseExpiry: found.licenseExpiry,
+                insuranceExpiry: found.insuranceExpiry
+            });
         } else {
-            setError("No record found. Please check the License ID.");
+            setError("No record found. Please check the ID.");
             setResult(null);
         }
     };
@@ -46,7 +54,7 @@ export default function PublicVerification() {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center">
             {/* HEADER */}
             <header className="w-full flex justify-between items-center bg-white shadow px-8 py-4 mb-8">
-                <div className="text-xl font-bold text-blue-700">Public Verification</div>
+                <div className="text-xl font-bold text-indigo-900">Public Verification</div>
                 {/*<img src="/logo.png" alt="Logo" className="h-10" />*/}
             </header>
             {/* SEARCH FORM */}
@@ -55,12 +63,15 @@ export default function PublicVerification() {
                 onSubmit={handleVerify}
             >
                 <label className="font-semibold text-gray-700">Verify by License ID</label>
-                <input
-                    className="border rounded px-3 py-2"
-                    placeholder="Enter License ID"
-                    value={licenseId}
-                    onChange={e => setLicenseId(e.target.value)}
-                />
+                <div className="flex items-center gap-2 border rounded px-3 py-2">
+                    <Search className="w-4 h-4 text-gray-400" />
+                    <input
+                        className="flex-1 focus:outline-none"
+                        placeholder="Enter License ID, Plate, or Permit ID"
+                        value={licenseId}
+                        onChange={e => setLicenseId(e.target.value)}
+                    />
+                </div>
                 <div className="flex items-center gap-2">
                     <input
                         className="border rounded px-3 py-2 w-32"
@@ -72,7 +83,7 @@ export default function PublicVerification() {
                 </div>
                 <button
                     type="submit"
-                    className="bg-blue-600 text-white px-4 py-2 rounded font-bold"
+                    className="bg-gradient-to-r from-indigo-700 to-emerald-500 text-white px-4 py-2 rounded font-bold hover:from-indigo-800 hover:to-emerald-600"
                 >
                     Verify
                 </button>
@@ -96,18 +107,35 @@ export default function PublicVerification() {
                         <div>
                             Status:{" "}
                             <span
-                                className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                    result.status === "ACTIVE"
-                                        ? "bg-green-200 text-green-800"
-                                        : "bg-red-200 text-red-800"
-                                }`}
+                                className={`px-3 py-1 rounded-full text-xs font-bold ${result.status === "ACTIVE"
+                                    ? "bg-green-200 text-green-800"
+                                    : "bg-red-200 text-red-800"
+                                    }`}
                             >
-                {result.status}
-              </span>
+                                {result.status}
+                            </span>
                         </div>
                         <div className="text-gray-500 text-xs">
                             Last Updated: {result.updated}
                         </div>
+                        {result.driverName && (
+                            <div className="text-sm text-gray-700">Driver: <span className="font-semibold">{result.driverName}</span></div>
+                        )}
+                        {result.licenseNo && (
+                            <div className="text-sm text-gray-700">License: <span className="font-semibold">{result.licenseNo}</span></div>
+                        )}
+                        {result.vehiclePlate && (
+                            <div className="text-sm text-gray-700">Plate: <span className="font-semibold">{result.vehiclePlate}</span></div>
+                        )}
+                        {result.borough && (
+                            <div className="text-sm text-gray-700">Borough: <span className="font-semibold">{result.borough}</span></div>
+                        )}
+                        {result.licenseExpiry && (
+                            <div className="text-sm text-gray-700">License Expiry: <span className="font-semibold">{new Date(result.licenseExpiry).toLocaleDateString()}</span></div>
+                        )}
+                        {result.insuranceExpiry && (
+                            <div className="text-sm text-gray-700">Insurance Expiry: <span className="font-semibold">{new Date(result.insuranceExpiry).toLocaleDateString()}</span></div>
+                        )}
                     </div>
                 </div>
             )}

@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import { Settings, Edit, Trash2, Plus, Scale } from "lucide-react";
+import { storage } from '@/app/utils/storage';
 
 export default function AdminConfiguration() {
-    // Status Codes
+    // Status Codes - load default from localStorage adminConfig
     const [statusCodes, setStatusCodes] = useState(["ACTIVE", "SUSPENDED"]);
     const [newStatus, setNewStatus] = useState("");
     const [editIdx, setEditIdx] = useState(null);
@@ -20,11 +22,39 @@ export default function AdminConfiguration() {
     const [complianceThreshold, setComplianceThreshold] = useState(85);
     const [editThreshold, setEditThreshold] = useState(false);
 
+    // Load from localStorage on mount
+    useEffect(() => {
+        const cfg = storage.get('adminConfig');
+        if (cfg) {
+            if (Array.isArray(cfg.statusCodes)) setStatusCodes(cfg.statusCodes);
+            if (Array.isArray(cfg.boroughRules)) setBoroughRules(cfg.boroughRules);
+            if (typeof cfg.complianceThreshold === 'number') setComplianceThreshold(cfg.complianceThreshold);
+        }
+    }, []);
+
+    const saveConfig = (next) => {
+        const cfg = {
+            statusCodes: statusCodes,
+            boroughRules: boroughRules,
+            complianceThreshold: complianceThreshold,
+            ...(next || {})
+        };
+        storage.set('adminConfig', cfg);
+        // update local copies if next contains updates
+        if (next) {
+            if (next.statusCodes) setStatusCodes(next.statusCodes);
+            if (next.boroughRules) setBoroughRules(next.boroughRules);
+            if (typeof next.complianceThreshold === 'number') setComplianceThreshold(next.complianceThreshold);
+        }
+    };
+
     // Status Codes handlers
     const handleAddStatus = () => {
         if (newStatus && !statusCodes.includes(newStatus)) {
-            setStatusCodes([...statusCodes, newStatus]);
+            const updated = [...statusCodes, newStatus];
+            setStatusCodes(updated);
             setNewStatus("");
+            saveConfig({ statusCodes: updated });
         }
     };
     const handleEditStatus = idx => {
@@ -37,26 +67,49 @@ export default function AdminConfiguration() {
         setStatusCodes(updated);
         setEditIdx(null);
         setEditValue("");
+        saveConfig({ statusCodes: updated });
     };
     const handleDeleteStatus = idx => {
-        setStatusCodes(statusCodes.filter((_, i) => i !== idx));
+        const updated = statusCodes.filter((_, i) => i !== idx);
+        setStatusCodes(updated);
+        saveConfig({ statusCodes: updated });
     };
 
     // Borough Rules handlers
     const handleAddBoroughRule = () => {
         if (newBorough && newLimit) {
-            setBoroughRules([...boroughRules, { borough: newBorough, maxUtilization: Number(newLimit) }]);
+            const updated = [...boroughRules, { borough: newBorough, maxUtilization: Number(newLimit) }];
+            setBoroughRules(updated);
             setNewBorough("");
             setNewLimit("");
+            saveConfig({ boroughRules: updated });
         }
     };
     const handleDeleteBoroughRule = idx => {
-        setBoroughRules(boroughRules.filter((_, i) => i !== idx));
+        const updated = boroughRules.filter((_, i) => i !== idx);
+        setBoroughRules(updated);
+        saveConfig({ boroughRules: updated });
     };
 
     // Governance Controls handlers
     const handleSaveThreshold = () => {
         setEditThreshold(false);
+        saveConfig({ complianceThreshold });
+    };
+
+    const handleResetDefaults = () => {
+        const defaults = {
+            statusCodes: ["ACTIVE", "SUSPENDED"],
+            boroughRules: [
+                { borough: "Manhattan", maxUtilization: 120 },
+                { borough: "Brooklyn", maxUtilization: 100 },
+            ],
+            complianceThreshold: 85
+        };
+        setStatusCodes(defaults.statusCodes);
+        setBoroughRules(defaults.boroughRules);
+        setComplianceThreshold(defaults.complianceThreshold);
+        saveConfig(defaults);
     };
 
     return (
@@ -68,9 +121,13 @@ export default function AdminConfiguration() {
                     <span className="font-bold text-blue-700">Admin / Rules & Configuration</span>
                 </nav>
                 {/* HEADER */}
-                <header className="bg-white shadow flex items-center gap-4 px-8 py-6">
+                <header className="bg-white shadow flex items-center gap-4 px-8 py-6 justify-between">
                     <Settings className="w-8 h-8 text-indigo-600" />
                     <div className="text-xl font-bold">Rules Configuration</div>
+                    <div className="flex gap-2">
+                        <button className="bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded" onClick={handleResetDefaults}>Reset Defaults</button>
+                        <button className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded text-white" onClick={() => saveConfig()}>Save All</button>
+                    </div>
                 </header>
                 <main className="flex-1 p-8 space-y-8">
                     {/* STATUS CODES */}
@@ -127,24 +184,24 @@ export default function AdminConfiguration() {
                         </div>
                         <table className="w-full mb-4">
                             <thead>
-                            <tr>
-                                <th className="text-left py-1">Borough</th>
-                                <th className="text-left py-1">Max Utilization</th>
-                                <th></th>
-                            </tr>
+                                <tr>
+                                    <th className="text-left py-1">Borough</th>
+                                    <th className="text-left py-1">Max Utilization</th>
+                                    <th></th>
+                                </tr>
                             </thead>
                             <tbody>
-                            {boroughRules.map((rule, idx) => (
-                                <tr key={idx}>
-                                    <td className="py-1">{rule.borough}</td>
-                                    <td className="py-1">{rule.maxUtilization}</td>
-                                    <td>
-                                        <button className="text-red-600" onClick={() => handleDeleteBoroughRule(idx)}>
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
+                                {boroughRules.map((rule, idx) => (
+                                    <tr key={idx}>
+                                        <td className="py-1">{rule.borough}</td>
+                                        <td className="py-1">{rule.maxUtilization}</td>
+                                        <td>
+                                            <button className="text-red-600" onClick={() => handleDeleteBoroughRule(idx)}>
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                         <div className="flex gap-2">
