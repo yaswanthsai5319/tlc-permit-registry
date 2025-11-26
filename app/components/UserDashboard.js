@@ -136,6 +136,36 @@ export default function UserDashboard({ user, onLogout }) {
         e.preventDefault();
         if (!validateCurrentTab()) return;
 
+        // Calculate jurisdiction compliance
+        const calculateCompliance = () => {
+            let score = 0;
+            let total = 0;
+
+            // Fleet Owner compliance (20%)
+            total += 20;
+            if (formData.fleetOwnerName && formData.fleetCompanyName && formData.baseNo) score += 20;
+
+            // Driver compliance (30%)
+            total += 30;
+            if (formData.driverName && formData.licenseNo && formData.licenseExpiry) {
+                const licenseValid = new Date(formData.licenseExpiry) > new Date();
+                score += licenseValid ? 30 : 15;
+            }
+
+            // Vehicle compliance (30%)
+            total += 30;
+            if (formData.vehiclePlate && formData.vehicleVin && formData.insuranceExpiry) {
+                const insuranceValid = new Date(formData.insuranceExpiry) > new Date();
+                score += insuranceValid ? 30 : 15;
+            }
+
+            // Payment compliance (20%)
+            total += 20;
+            if (formData.paymentMethod && formData.cardNumber) score += 20;
+
+            return Math.round((score / total) * 100);
+        };
+
         const permits = storage.get('permits') || [];
         const newPermit = {
             id: Date.now().toString(),
@@ -144,7 +174,8 @@ export default function UserDashboard({ user, onLogout }) {
             submittedBy: user.username,
             submittedAt: new Date().toISOString(),
             approvedAt: null,
-            schedule: generateDefaultSchedule(7, new Date())
+            schedule: generateDefaultSchedule(7, new Date()),
+            jurisdictionCompliance: calculateCompliance()
         };
 
         permits.push(newPermit);

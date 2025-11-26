@@ -540,8 +540,8 @@ export default function AdminDashboard({ user, onLogout }) {
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`py-4 px-1 border-b-2 font-semibold text-sm transition-all duration-150 ${activeTab === tab
-                      ? 'border-blue-500 text-blue-700 bg-gradient-to-r from-blue-100 to-green-100 shadow'
-                      : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-300'
+                    ? 'border-blue-500 text-blue-700 bg-gradient-to-r from-blue-100 to-green-100 shadow'
+                    : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-300'
                     }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -725,6 +725,67 @@ export default function AdminDashboard({ user, onLogout }) {
                           )}
                         </div>
                       </div>
+                      {/* Jurisdiction Compliance */}
+                      {viewModal.permit.jurisdictionCompliance !== undefined && (
+                        <div>
+                          <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                            <TrendingUp className="w-5 h-5 mr-2 text-indigo-600" />
+                            Jurisdiction Compliance
+                          </h3>
+                          <div className="bg-gray-50 rounded-xl p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-gray-600 text-sm mb-1">Compliance Score</p>
+                                <p className="text-3xl font-bold text-indigo-600">
+                                  {viewModal.permit.jurisdictionCompliance}%
+                                </p>
+                              </div>
+                              <div className="w-24 h-24">
+                                <svg className="transform -rotate-90" viewBox="0 0 100 100">
+                                  <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    fill="none"
+                                    stroke="#e5e7eb"
+                                    strokeWidth="8"
+                                  />
+                                  <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    fill="none"
+                                    stroke={
+                                      viewModal.permit.jurisdictionCompliance >= 80
+                                        ? '#10b981'
+                                        : viewModal.permit.jurisdictionCompliance >= 60
+                                          ? '#f59e0b'
+                                          : '#ef4444'
+                                    }
+                                    strokeWidth="8"
+                                    strokeDasharray={`${(viewModal.permit.jurisdictionCompliance / 100) * 251.2} 251.2`}
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+                            <div className="mt-3 text-sm">
+                              <p className={`font-semibold ${viewModal.permit.jurisdictionCompliance >= 80
+                                  ? 'text-green-700'
+                                  : viewModal.permit.jurisdictionCompliance >= 60
+                                    ? 'text-yellow-700'
+                                    : 'text-red-700'
+                                }`}>
+                                {viewModal.permit.jurisdictionCompliance >= 80
+                                  ? '✓ High Compliance'
+                                  : viewModal.permit.jurisdictionCompliance >= 60
+                                    ? '⚠ Moderate Compliance'
+                                    : '✗ Low Compliance'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       {/* Next Steps */}
                       <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded mt-4">
                         <h4 className="font-semibold text-blue-900 mb-2">Next Steps</h4>
@@ -1259,8 +1320,8 @@ export default function AdminDashboard({ user, onLogout }) {
                               <td className="px-6 py-3 text-sm text-blue-900">{driverInfo.licenseNo || '-'}</td>
                               <td className="px-6 py-3 text-sm">
                                 <span className={`px-2 py-1 rounded-full text-xs font-bold shadow ${driverInfo.driverStatus === 'ACTIVE' ? 'bg-green-200 text-green-800 border border-green-400'
-                                    : driverInfo.driverStatus === 'SUSPENDED' ? 'bg-yellow-200 text-yellow-800 border border-yellow-400'
-                                      : 'bg-red-200 text-red-800 border border-red-400'
+                                  : driverInfo.driverStatus === 'SUSPENDED' ? 'bg-yellow-200 text-yellow-800 border border-yellow-400'
+                                    : 'bg-red-200 text-red-800 border border-red-400'
                                   }`}>
                                   {driverInfo.driverStatus}
                                 </span>
@@ -1279,8 +1340,8 @@ export default function AdminDashboard({ user, onLogout }) {
                               </td>
                               <td className="px-6 py-3 text-sm">
                                 <span className={`px-2 py-1 rounded-full text-xs font-bold shadow ${vehicle.status === 'approved' ? 'bg-green-100 text-green-700 border border-green-400'
-                                    : vehicle.status === 'pending' ? 'bg-orange-100 text-orange-700 border border-orange-400'
-                                      : 'bg-red-100 text-red-700 border border-red-400'
+                                  : vehicle.status === 'pending' ? 'bg-orange-100 text-orange-700 border border-orange-400'
+                                    : 'bg-red-100 text-red-700 border border-red-400'
                                   }`}>
                                   {vehicle.status.charAt(0).toUpperCase() + vehicle.status.slice(1)}
                                 </span>
@@ -1381,8 +1442,8 @@ export default function AdminDashboard({ user, onLogout }) {
                               <td className="px-6 py-3 text-sm text-gray-900">{email}</td>
                               <td className="px-6 py-3 text-sm">
                                 <span className={`px-2 py-1 rounded-full text-xs font-bold shadow ${driverStatus === 'ACTIVE' ? 'bg-green-200 text-green-800 border border-green-400'
-                                    : driverStatus === 'SUSPENDED' ? 'bg-yellow-200 text-yellow-800 border border-yellow-400'
-                                      : 'bg-red-200 text-red-800 border border-red-400'
+                                  : driverStatus === 'SUSPENDED' ? 'bg-yellow-200 text-yellow-800 border border-yellow-400'
+                                    : 'bg-red-200 text-red-800 border border-red-400'
                                   }`}>
                                   {driverStatus}
                                 </span>

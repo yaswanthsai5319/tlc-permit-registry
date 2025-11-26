@@ -1,9 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Filter, Search } from "lucide-react";
+import { Filter, Search, Eye, Building, User, Car, FileText, TrendingUp, CheckCircle, XCircle } from "lucide-react";
 import { storage } from '@/app/utils/storage';
 
-const permitTypes = ["All", "Vehicle", "Driver", "Base"];
 const statuses = ["All", "Approved", "Rejected", "Pending"];
 const boroughs = ["All", "Manhattan", "Queens", "Brooklyn", "Bronx", "Staten Island"];
 
@@ -14,7 +13,6 @@ function paginate(array, page_size, page_number) {
 }
 
 export default function SearchPermit() {
-    const [type, setType] = useState("All");
     const [status, setStatus] = useState("All");
     const [borough, setBorough] = useState("All");
     const [sortBy, setSortBy] = useState("id");
@@ -25,13 +23,129 @@ export default function SearchPermit() {
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
+        loadPermits();
+    }, []);
+
+    const loadPermits = () => {
         const stored = storage.get('permits') || [];
         setPermits(stored);
-    }, []);
+    };
+
+    const savePermits = (updated) => {
+        storage.set('permits', updated);
+        setPermits(updated);
+    };
+
+    // View Modal State
+    const [viewModal, setViewModal] = useState({
+        open: false,
+        permit: null
+    });
+
+    const [approveModal, setApproveModal] = useState({
+        open: false,
+        permitId: null,
+        start: '',
+        end: ''
+    });
+
+    const openViewModal = (permit) => {
+        setViewModal({ open: true, permit });
+    };
+
+    const closeViewModal = () => {
+        setViewModal({ open: false, permit: null });
+    };
+
+    const openApproveModal = (id) => {
+        const today = new Date().toISOString().split('T')[0];
+        const oneYearLater = new Date();
+        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+        const endDate = oneYearLater.toISOString().split('T')[0];
+
+        setApproveModal({
+            open: true,
+            permitId: id,
+            start: today,
+            end: endDate
+        });
+    };
+
+    const approveFromViewModal = () => {
+        if (!viewModal.permit) return;
+        openApproveModal(viewModal.permit.id);
+        closeViewModal();
+    };
+
+    const rejectFromViewModal = () => {
+        if (!viewModal.permit) return;
+        rejectPermit(viewModal.permit.id);
+        closeViewModal();
+    };
+
+    const rejectPermit = (permitId) => {
+        const updatedPermits = permits.map(permit =>
+            permit.id === permitId
+                ? { ...permit, status: 'rejected', approvedAt: new Date().toISOString() }
+                : permit
+        );
+        savePermits(updatedPermits);
+    };
+
+    const buildDefaultSchedule = (start, end) => {
+        const days = [];
+        let current = new Date(start);
+        const last = new Date(end);
+
+        while (current <= last) {
+            const dateStr = current.toISOString().split("T")[0];
+
+            for (let hour = 0; hour < 24; hour++) {
+                days.push({
+                    date: dateStr,
+                    hour,
+                    status: "available"
+                });
+            }
+
+            current.setDate(current.getDate() + 1);
+        }
+
+        return days;
+    };
+
+    const finalizeApproval = () => {
+        const { permitId, start, end } = approveModal;
+
+        // Validate dates are selected
+        if (!start || !end) {
+            alert('Please select both start and end dates');
+            return;
+        }
+
+        // Validate end date is after start date
+        if (new Date(end) <= new Date(start)) {
+            alert('End date must be after start date');
+            return;
+        }
+
+        const updated = permits.map(p =>
+            p.id === permitId
+                ? {
+                    ...p,
+                    status: "approved",
+                    approvedAt: new Date().toISOString(),
+                    schedule: buildDefaultSchedule(start, end)
+                }
+                : p
+        );
+
+        savePermits(updated);
+        setApproveModal({ open: false, permitId: null, start: '', end: '' });
+    };
 
     // Filter and sort
     let filtered = permits.filter(p =>
-        (type === "All" || p.type === type) &&
         (status === "All" || (p.status ? p.status.toLowerCase() === status.toLowerCase() : false)) &&
         (borough === "All" || (p.borough && p.borough === borough)) &&
         (searchTerm === '' || [p.id, p.driverName, p.vehiclePlate].join(' ').toLowerCase().includes(searchTerm.toLowerCase()))
@@ -94,8 +208,8 @@ export default function SearchPermit() {
                                 <Filter className="w-5 h-5 text-slate-700" />
                                 <span className="font-semibold text-slate-900">Filter Options</span>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div className="relative lg:col-span-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="relative lg:col-span-1">
                                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                                     <input
                                         value={searchTerm}
@@ -104,12 +218,6 @@ export default function SearchPermit() {
                                         className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
                                     />
                                 </div>
-                                <select
-                                    value={type}
-                                    onChange={e => { setType(e.target.value); setPage(1); }}
-                                    className="px-4 py-2.5 border border-slate-200 rounded-lg bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all cursor-pointer">
-                                    {permitTypes.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
                                 <select
                                     value={status}
                                     onChange={e => { setStatus(e.target.value); setPage(1); }}
@@ -145,6 +253,7 @@ export default function SearchPermit() {
                                                     </div>
                                                 </th>
                                             ))}
+                                            <th className="py-4 px-6 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
@@ -180,6 +289,15 @@ export default function SearchPermit() {
                                                     </td>
                                                     <td className="py-4 px-6 text-sm text-slate-700">{p.borough || '-'}</td>
                                                     <td className="py-4 px-6 text-sm text-slate-700">{p.licenseExpiry ? new Date(p.licenseExpiry).toLocaleDateString() : (p.expiry ? p.expiry : '-')}</td>
+                                                    <td className="py-4 px-6">
+                                                        <button
+                                                            onClick={() => openViewModal(p)}
+                                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-all shadow-sm"
+                                                        >
+                                                            <Eye className="w-4 h-4" />
+                                                            View
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             ))
                                         )}
@@ -216,6 +334,297 @@ export default function SearchPermit() {
                     </div>
                 </main>
             </div>
+
+            {/* View Modal */}
+            {viewModal.open && viewModal.permit && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        {/* Fleet Owner Information */}
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                                <Building className="w-5 h-5 mr-2 text-blue-600" />
+                                Fleet Owner Information
+                            </h3>
+                            <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p className="text-gray-600">Owner Name</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.fleetOwnerName}</p>
+                                </div>
+                                {viewModal.permit.fleetOwnerEmail && (
+                                    <div>
+                                        <p className="text-gray-600">Email</p>
+                                        <p className="font-semibold text-gray-900">{viewModal.permit.fleetOwnerEmail}</p>
+                                    </div>
+                                )}
+                                {viewModal.permit.fleetOwnerPhone && (
+                                    <div>
+                                        <p className="text-gray-600">Phone</p>
+                                        <p className="font-semibold text-gray-900">{viewModal.permit.fleetOwnerPhone}</p>
+                                    </div>
+                                )}
+                                <div>
+                                    <p className="text-gray-600">Company Name</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.fleetCompanyName}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-600">Base Number</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.baseNo}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-600">Borough</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.borough}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Driver & License Information */}
+                        <div className="mt-4">
+                            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                                <User className="w-5 h-5 mr-2 text-green-600" />
+                                Driver & License Information
+                            </h3>
+                            <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p className="text-gray-600">Driver Name</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.driverName}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-600">License Number</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.licenseNo}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-600">License Expiry</p>
+                                    <p className="font-semibold text-gray-900">
+                                        {viewModal.permit.licenseExpiry ? new Date(viewModal.permit.licenseExpiry).toLocaleDateString() : ''}
+                                    </p>
+                                </div>
+                                {viewModal.permit.driverPhone && (
+                                    <div>
+                                        <p className="text-gray-600">Phone</p>
+                                        <p className="font-semibold text-gray-900">{viewModal.permit.driverPhone}</p>
+                                    </div>
+                                )}
+                                {viewModal.permit.driverEmail && (
+                                    <div>
+                                        <p className="text-gray-600">Email</p>
+                                        <p className="font-semibold text-gray-900">{viewModal.permit.driverEmail}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        {/* Vehicle Information */}
+                        <div className="mt-4">
+                            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                                <Car className="w-5 h-5 mr-2 text-purple-600" />
+                                Vehicle Information
+                            </h3>
+                            <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p className="text-gray-600">Plate Number</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.vehiclePlate}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-600">VIN</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.vehicleVin}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-600">Make & Model</p>
+                                    <p className="font-semibold text-gray-900">
+                                        {viewModal.permit.vehicleMake} {viewModal.permit.vehicleModel}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-600">Year</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.vehicleYear}</p>
+                                </div>
+                                {viewModal.permit.vehicleColor && (
+                                    <div>
+                                        <p className="text-gray-600">Color</p>
+                                        <p className="font-semibold text-gray-900">{viewModal.permit.vehicleColor}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        {/* Insurance Information */}
+                        <div className="mt-4">
+                            <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                                <FileText className="w-5 h-5 mr-2 text-orange-600" />
+                                Insurance Information
+                            </h3>
+                            <div className="bg-gray-50 rounded-xl p-4 grid md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p className="text-gray-600">Policy Number</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.insurancePolicy}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-600">Carrier</p>
+                                    <p className="font-semibold text-gray-900">{viewModal.permit.insuranceCarrier}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-600">Expiry Date</p>
+                                    <p className="font-semibold text-gray-900">
+                                        {viewModal.permit.insuranceExpiry ? new Date(viewModal.permit.insuranceExpiry).toLocaleDateString() : ''}
+                                    </p>
+                                </div>
+                                {viewModal.permit.insuranceCoverage && (
+                                    <div>
+                                        <p className="text-gray-600">Coverage Amount</p>
+                                        <p className="font-semibold text-gray-900">{viewModal.permit.insuranceCoverage}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        {/* Jurisdiction Compliance */}
+                        {viewModal.permit.jurisdictionCompliance !== undefined && (
+                            <div className="mt-4">
+                                <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                                    <TrendingUp className="w-5 h-5 mr-2 text-indigo-600" />
+                                    Jurisdiction Compliance
+                                </h3>
+                                <div className="bg-gray-50 rounded-xl p-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-gray-600 text-sm mb-1">Compliance Score</p>
+                                            <p className="text-3xl font-bold text-indigo-600">
+                                                {viewModal.permit.jurisdictionCompliance}%
+                                            </p>
+                                        </div>
+                                        <div className="w-24 h-24">
+                                            <svg className="transform -rotate-90" viewBox="0 0 100 100">
+                                                <circle
+                                                    cx="50"
+                                                    cy="50"
+                                                    r="40"
+                                                    fill="none"
+                                                    stroke="#e5e7eb"
+                                                    strokeWidth="8"
+                                                />
+                                                <circle
+                                                    cx="50"
+                                                    cy="50"
+                                                    r="40"
+                                                    fill="none"
+                                                    stroke={
+                                                        viewModal.permit.jurisdictionCompliance >= 80
+                                                            ? '#10b981'
+                                                            : viewModal.permit.jurisdictionCompliance >= 60
+                                                                ? '#f59e0b'
+                                                                : '#ef4444'
+                                                    }
+                                                    strokeWidth="8"
+                                                    strokeDasharray={`${(viewModal.permit.jurisdictionCompliance / 100) * 251.2} 251.2`}
+                                                    strokeLinecap="round"
+                                                />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 text-sm">
+                                        <p className={`font-semibold ${viewModal.permit.jurisdictionCompliance >= 80
+                                            ? 'text-green-700'
+                                            : viewModal.permit.jurisdictionCompliance >= 60
+                                                ? 'text-yellow-700'
+                                                : 'text-red-700'
+                                            }`}>
+                                            {viewModal.permit.jurisdictionCompliance >= 80
+                                                ? '✓ High Compliance'
+                                                : viewModal.permit.jurisdictionCompliance >= 60
+                                                    ? '⚠ Moderate Compliance'
+                                                    : '✗ Low Compliance'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {/* Modal Actions */}
+                        <div className="flex justify-end gap-2 mt-6">
+                            <button
+                                onClick={closeViewModal}
+                                className="px-4 py-2 bg-gray-200 rounded text-gray-800 hover:bg-gray-300 transition-all"
+                            >
+                                Close
+                            </button>
+                            {viewModal.permit.status && viewModal.permit.status.toLowerCase() === 'pending' && (
+                                <>
+                                    <button
+                                        onClick={approveFromViewModal}
+                                        className="px-4 py-2 bg-green-600 rounded text-white hover:bg-green-700 transition-all flex items-center gap-2"
+                                    >
+                                        <CheckCircle className="w-4 h-4" />
+                                        Approve
+                                    </button>
+                                    <button
+                                        onClick={rejectFromViewModal}
+                                        className="px-4 py-2 bg-red-600 rounded text-white hover:bg-red-700 transition-all flex items-center gap-2"
+                                    >
+                                        <XCircle className="w-4 h-4" />
+                                        Reject
+                                    </button>
+                                </>
+                            )}
+                            {viewModal.permit.status && viewModal.permit.status.toLowerCase() === 'approved' && (
+                                <div className="px-4 py-2 bg-green-100 text-green-800 rounded font-semibold flex items-center gap-2">
+                                    <CheckCircle className="w-4 h-4" />
+                                    Already Approved
+                                </div>
+                            )}
+                            {viewModal.permit.status && viewModal.permit.status.toLowerCase() === 'rejected' && (
+                                <div className="px-4 py-2 bg-red-100 text-red-800 rounded font-semibold flex items-center gap-2">
+                                    <XCircle className="w-4 h-4" />
+                                    Already Rejected
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Approve Modal */}
+            {approveModal.open && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-xl w-96">
+                        <h3 className="text-lg font-bold mb-4 text-gray-800">Set Permit Validity</h3>
+
+                        <label className="text-sm text-gray-700">Start Date</label>
+                        <input
+                            type="date"
+                            value={approveModal.start ?? ''}
+                            onChange={e => {
+                                const newStart = e.target.value;
+                                const newEnd = new Date(newStart);
+                                newEnd.setFullYear(newEnd.getFullYear() + 1);
+                                setApproveModal(prev => ({
+                                    ...prev,
+                                    start: newStart,
+                                    end: newEnd.toISOString().split('T')[0]
+                                }));
+                            }}
+                            className="w-full px-3 py-2 border rounded mb-3 text-black"
+                        />
+
+                        <label className="text-sm text-gray-700">End Date</label>
+                        <input
+                            type="date"
+                            value={approveModal.end ?? ''}
+                            onChange={(e) => setApproveModal(prev => ({ ...prev, end: e.target.value }))}
+                            className="w-full px-3 py-2 border rounded mb-4 text-black"
+                        />
+
+                        <div className="flex justify-end gap-2">
+                            <button
+                                onClick={() => setApproveModal({ open: false })}
+                                className="px-4 py-2 bg-gray-200 rounded text-black hover:bg-gray-300 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={finalizeApproval}
+                                className="px-4 py-2 bg-green-600 rounded text-white hover:bg-green-700 transition-all"
+                            >
+                                Confirm Approval
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
