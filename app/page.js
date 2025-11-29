@@ -9,15 +9,20 @@ import AdminDashboard from './components/AdminDashboard';
 import TLCAdminDashboard from './components/TLCAdminDashboard';
 import VehicleOwnerHome from './components/VehicleOwnerHome';
 import FleetOwnerHome from './components/FleetOwnerHome';
+import CarrierOpsHome from './components/CarrierOpsHome';
+import ComplianceOfficer from './components/ComplianceOfficer';
+import MarketplaceServiceLead from './components/MarketplaceServiceLead';
+import PublicVerification from './components/PublicVerification';
 
 const USER_TYPES = [
     { value: '', label: 'Select User Type' },
-    { value: 'admin', label: 'Registry Admin' },
+    { value: 'admin', label: 'Registry Admin (TLC Operator Governance)' },
     { value: 'carrier', label: 'Carrier Ops Manager' },
-    { value: 'owner', label: 'Vehicle Owner' },
+    { value: 'compliance', label: 'Compliance Officer (TLC View)' },
+    { value: 'marketplace', label: 'Marketplace Service Lead' },
     { value: 'fleet', label: 'Fleet Owner' },
-    { value: 'public', label: 'Public/Verifier' },
-    { value: 'tlc', label: 'TLC Super Admin' }
+    { value: 'vehicle', label: 'Vehicle Owner' },
+    { value: 'public', label: 'Public/Verifier' }
 ];
 
 export default function Home() {
@@ -35,14 +40,6 @@ export default function Home() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // TLC login check (hardcoded)
-        if (userType === 'tlc' && username === 'tlc' && password === 'tlc123') {
-            setCurrentUser({ username: 'tlc', role: 'tlc' });
-            setIsLoggedIn(true);
-            setError('');
-            return;
-        }
-
         // Admin login check (hardcoded)
         if (userType === 'admin' && username === 'admin' && password === 'admin123') {
             setCurrentUser({ username: 'admin', role: 'admin' });
@@ -51,17 +48,49 @@ export default function Home() {
             return;
         }
 
-        // Owner login check (hardcoded)
-        if (userType === 'owner' && username === 'owner' && password === 'owner123') {
-            setCurrentUser({ username: 'owner', role: 'owner' });
+        // Carrier login check (hardcoded)
+        if (userType === 'carrier' && username === 'carrier' && password === 'carrier123') {
+            setCurrentUser({ username: 'carrier', role: 'carrier' });
             setIsLoggedIn(true);
             setError('');
             return;
         }
 
-        // Fleet login check (hardcoded)
+        // Compliance login check (hardcoded)
+        if (userType === 'compliance' && username === 'compliance' && password === 'compliance123') {
+            setCurrentUser({ username: 'compliance', role: 'compliance' });
+            setIsLoggedIn(true);
+            setError('');
+            return;
+        }
+
+        // Marketplace login check (hardcoded)
+        if (userType === 'marketplace' && username === 'marketplace' && password === 'marketplace123') {
+            setCurrentUser({ username: 'marketplace', role: 'marketplace' });
+            setIsLoggedIn(true);
+            setError('');
+            return;
+        }
+
+        // Fleet Owner login check (hardcoded)
         if (userType === 'fleet' && username === 'fleet' && password === 'fleet123') {
             setCurrentUser({ username: 'fleet', role: 'fleet' });
+            setIsLoggedIn(true);
+            setError('');
+            return;
+        }
+
+        // Vehicle Owner login check (hardcoded)
+        if (userType === 'vehicle' && username === 'vehicle' && password === 'vehicle123') {
+            setCurrentUser({ username: 'vehicle', role: 'vehicle' });
+            setIsLoggedIn(true);
+            setError('');
+            return;
+        }
+
+        // Public login check (hardcoded)
+        if (userType === 'public' && username === 'public' && password === 'public123') {
+            setCurrentUser({ username: 'public', role: 'public' });
             setIsLoggedIn(true);
             setError('');
             return;
@@ -93,18 +122,19 @@ export default function Home() {
     if (isLoggedIn && currentUser) {
         switch (currentUser.role) {
             case 'admin':
-                return <AdminDashboard user={currentUser} onLogout={handleLogout} />;
-            case 'owner':
-                return <VehicleOwnerHome user={currentUser} onLogout={handleLogout} />;
+                return <TLCAdminDashboard user={currentUser} onLogout={handleLogout} />;
+            case 'carrier':
+                return <CarrierOpsHome user={currentUser} onLogout={handleLogout} />;
+            case 'compliance':
+                return <ComplianceOfficer user={currentUser} onLogout={handleLogout} />;
+            case 'marketplace':
+                return <MarketplaceServiceLead user={currentUser} onLogout={handleLogout} />;
             case 'fleet':
                 return <FleetOwnerHome user={currentUser} onLogout={handleLogout} />;
-            case 'carrier':
-            case 'compliance':
-            case 'marketplace':
+            case 'vehicle':
+                return <VehicleOwnerHome user={currentUser} onLogout={handleLogout} />;
             case 'public':
-                return <UserDashboard user={currentUser} onLogout={handleLogout} />;
-            case 'tlc':
-                return <TLCAdminDashboard user={currentUser} onLogout={handleLogout} />;
+                return <PublicVerification user={currentUser} onLogout={handleLogout} />;
             default:
                 return <UserDashboard user={currentUser} onLogout={handleLogout} />;
         }

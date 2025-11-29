@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ClipboardList, CheckCircle, User, Car, FileText, Shield, LogOut, Search } from 'lucide-react';
 import { storage } from '../utils/storage';
 
@@ -71,6 +71,13 @@ export default function FleetOwnerHome({ user, onLogout }) {
     // Search state for advanced search
     const [search, setSearch] = useState('');
     const [searchType, setSearchType] = useState('all');
+    const [availableBases, setAvailableBases] = useState([]);
+
+    useEffect(() => {
+        const permits = storage.get('permits') || [];
+        const bases = permits.filter(p => p.type === 'Base' && p.status === 'ACTIVE');
+        setAvailableBases(bases);
+    }, []);
 
     // File handlers
     const handleFileChange = (e) => {
@@ -333,11 +340,10 @@ export default function FleetOwnerHome({ user, onLogout }) {
                     {sidebarTabs.map(tab => (
                         <button
                             key={tab.key}
-                            className={`flex items-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${
-                                activePanel === tab.key
-                                    ? 'bg-blue-600 text-white shadow'
-                                    : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${activePanel === tab.key
+                                ? 'bg-blue-600 text-white shadow'
+                                : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
+                                }`}
                             onClick={() => {
                                 setActivePanel(tab.key);
                                 setVehicleSuccess(false);
@@ -386,28 +392,28 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                 <div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Applicant Type</label>
-                                        <select name="applicantType" value={formData.applicantType} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <select name="applicantType" value={formData.applicantType} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900">
                                             <option value="Fleet Owner">Fleet Owner</option>
                                         </select>
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
-                                        <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {vehicleErrors.fullName && <p className="text-red-600 text-sm">{vehicleErrors.fullName}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Phone *</label>
-                                        <input type="tel" name="contactPhone" value={formData.contactPhone} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="+1" />
+                                        <input type="tel" name="contactPhone" value={formData.contactPhone} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="+1" />
                                         {vehicleErrors.contactPhone && <p className="text-red-600 text-sm">{vehicleErrors.contactPhone}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
-                                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="owner@example.com" />
+                                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="owner@example.com" />
                                         {vehicleErrors.email && <p className="text-red-600 text-sm">{vehicleErrors.email}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Organization Name (if applicable)</label>
-                                        <input type="text" name="organization" value={formData.organization} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="XYZ Fleet" />
+                                        <input type="text" name="organization" value={formData.organization} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="XYZ Fleet" />
                                     </div>
                                     <div className="flex justify-end gap-2 mt-6">
                                         <button type="button" className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700" onClick={handleNextVehicleTab}>
@@ -420,17 +426,17 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">License Plate *</label>
-                                        <input type="text" name="licensePlate" value={formData.licensePlate} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="ABC1234" />
+                                        <input type="text" name="licensePlate" value={formData.licensePlate} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="ABC1234" />
                                         {vehicleErrors.licensePlate && <p className="text-red-600 text-sm">{vehicleErrors.licensePlate}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">VIN *</label>
-                                        <input type="text" name="vin" value={formData.vin} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="1FTFX12345ABCDE1234" />
+                                        <input type="text" name="vin" value={formData.vin} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="1FTFX12345ABCDE1234" />
                                         {vehicleErrors.vin && <p className="text-red-600 text-sm">{vehicleErrors.vin}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Make *</label>
-                                        <select name="make" value={formData.make} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <select name="make" value={formData.make} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900">
                                             <option value="">Select</option>
                                             {MAKES.map(make => <option key={make} value={make}>{make}</option>)}
                                         </select>
@@ -438,21 +444,21 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Model *</label>
-                                        <input type="text" name="model" value={formData.model} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Camry" />
+                                        <input type="text" name="model" value={formData.model} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="Camry" />
                                         {vehicleErrors.model && <p className="text-red-600 text-sm">{vehicleErrors.model}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Year *</label>
-                                        <input type="number" name="year" value={formData.year} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="2018" />
+                                        <input type="number" name="year" value={formData.year} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="2018" />
                                         {vehicleErrors.year && <p className="text-red-600 text-sm">{vehicleErrors.year}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Color (Optional)</label>
-                                        <input type="text" name="color" value={formData.color} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="White" />
+                                        <input type="text" name="color" value={formData.color} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="White" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Usage Type *</label>
-                                        <input type="text" name="usageType" value={formData.usageType} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Taxi" />
+                                        <input type="text" name="usageType" value={formData.usageType} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="Taxi" />
                                         {vehicleErrors.usageType && <p className="text-red-600 text-sm">{vehicleErrors.usageType}</p>}
                                     </div>
                                     <div></div>
@@ -470,26 +476,26 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                 <div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Insurance Binder *</label>
-                                        <input type="file" name="insuranceBinder" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="file" name="insuranceBinder" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {vehicleErrors.insuranceBinder && <p className="text-red-600 text-sm">{vehicleErrors.insuranceBinder}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Inspection Certificate *</label>
-                                        <input type="file" name="inspectionCertificate" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="file" name="inspectionCertificate" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {vehicleErrors.inspectionCertificate && <p className="text-red-600 text-sm">{vehicleErrors.inspectionCertificate}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Borough *</label>
-                                        <select name="borough" value={formData.borough} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <select name="borough" value={formData.borough} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900">
                                             {BOROUGHS.map(b => <option key={b} value={b}>{b}</option>)}
                                         </select>
                                         {vehicleErrors.borough && <p className="text-red-600 text-sm">{vehicleErrors.borough}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Base Affiliation (Optional)</label>
-                                        <select name="baseAffiliation" value={formData.baseAffiliation} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <select name="baseAffiliation" value={formData.baseAffiliation} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900">
                                             <option value="">Select</option>
-                                            {BASES.map(base => <option key={base} value={base}>{base}</option>)}
+                                            {availableBases.map(base => <option key={base.baseNo} value={base.baseNo}>{base.baseName} ({base.baseNo})</option>)}
                                         </select>
                                     </div>
                                     <div className="flex justify-between gap-2 mt-6">
@@ -505,7 +511,7 @@ export default function FleetOwnerHome({ user, onLogout }) {
                             {activeVehicleTab === 'preview' && (
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-800 mb-4">Preview & Verify Your Application</h3>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-4 text-slate-900">
                                         <h4 className="font-semibold text-blue-700 mb-2">Applicant Info</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div><span className="font-semibold">Applicant Type:</span> {formData.applicantType}</div>
@@ -515,7 +521,7 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                             <div><span className="font-semibold">Organization:</span> {formData.organization}</div>
                                         </div>
                                     </div>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-4 text-slate-900">
                                         <h4 className="font-semibold text-blue-700 mb-2">Vehicle Details</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div><span className="font-semibold">License Plate:</span> {formData.licensePlate}</div>
@@ -527,7 +533,7 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                             <div><span className="font-semibold">Usage Type:</span> {formData.usageType}</div>
                                         </div>
                                     </div>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-4 text-slate-900">
                                         <h4 className="font-semibold text-blue-700 mb-2">Compliance</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div>
@@ -595,48 +601,48 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
-                                        <input type="text" name="fullName" value={driverForm.fullName} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="text" name="fullName" value={driverForm.fullName} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {driverErrors.fullName && <p className="text-red-600 text-sm">{driverErrors.fullName}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">License Number (if applicable)</label>
-                                        <input type="text" name="licenseNumber" value={driverForm.licenseNumber} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="TLC123456" />
+                                        <input type="text" name="licenseNumber" value={driverForm.licenseNumber} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="TLC123456" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Phone *</label>
-                                        <input type="tel" name="contactPhone" value={driverForm.contactPhone} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="+1" />
+                                        <input type="tel" name="contactPhone" value={driverForm.contactPhone} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="+1" />
                                         {driverErrors.contactPhone && <p className="text-red-600 text-sm">{driverErrors.contactPhone}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
-                                        <input type="email" name="email" value={driverForm.email} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="driver@example.com" />
+                                        <input type="email" name="email" value={driverForm.email} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="driver@example.com" />
                                         {driverErrors.email && <p className="text-red-600 text-sm">{driverErrors.email}</p>}
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Mailing Address *</label>
-                                        <input type="text" name="mailingAddress" value={driverForm.mailingAddress} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="123 Elm Street, NY 10001" />
+                                        <input type="text" name="mailingAddress" value={driverForm.mailingAddress} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="123 Elm Street, NY 10001" />
                                         {driverErrors.mailingAddress && <p className="text-red-600 text-sm">{driverErrors.mailingAddress}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Social Security Number *</label>
-                                        <input type="text" name="ssn" value={driverForm.ssn} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="text" name="ssn" value={driverForm.ssn} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {driverErrors.ssn && <p className="text-red-600 text-sm">{driverErrors.ssn}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Driver License *</label>
-                                        <input type="file" name="driverLicense" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDriverFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="file" name="driverLicense" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDriverFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {driverErrors.driverLicense && <p className="text-red-600 text-sm">{driverErrors.driverLicense}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">State of Issuance *</label>
-                                        <select name="stateOfIssuance" value={driverForm.stateOfIssuance} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <select name="stateOfIssuance" value={driverForm.stateOfIssuance} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900">
                                             {DRIVER_STATES.map(state => <option key={state} value={state}>{state}</option>)}
                                         </select>
                                         {driverErrors.stateOfIssuance && <p className="text-red-600 text-sm">{driverErrors.stateOfIssuance}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Badge Tier *</label>
-                                        <select name="badgeTier" value={driverForm.badgeTier} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <select name="badgeTier" value={driverForm.badgeTier} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900">
                                             {BADGE_TIERS.map(tier => <option key={tier} value={tier}>{tier}</option>)}
                                         </select>
                                         {driverErrors.badgeTier && <p className="text-red-600 text-sm">{driverErrors.badgeTier}</p>}
@@ -652,16 +658,16 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Training Certificate *</label>
-                                        <input type="file" name="trainingCertificate" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDriverFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="file" name="trainingCertificate" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDriverFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {driverErrors.trainingCertificate && <p className="text-red-600 text-sm">{driverErrors.trainingCertificate}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Violations Declaration</label>
-                                        <input type="text" name="violationsDeclaration" value={driverForm.violationsDeclaration} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="None" />
+                                        <input type="text" name="violationsDeclaration" value={driverForm.violationsDeclaration} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="None" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Medical Clearance *</label>
-                                        <input type="file" name="medicalClearance" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDriverFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="file" name="medicalClearance" accept=".pdf,.jpg,.jpeg,.png" onChange={handleDriverFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {driverErrors.medicalClearance && <p className="text-red-600 text-sm">{driverErrors.medicalClearance}</p>}
                                     </div>
                                     <div></div>
@@ -685,7 +691,7 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Signature *</label>
-                                        <input type="text" name="signature" value={driverForm.signature} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="text" name="signature" value={driverForm.signature} onChange={handleDriverChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {driverErrors.signature && <p className="text-red-600 text-sm">{driverErrors.signature}</p>}
                                     </div>
                                     <div className="flex justify-between gap-2 mt-6">
@@ -701,7 +707,7 @@ export default function FleetOwnerHome({ user, onLogout }) {
                             {activeDriverTab === 'preview' && (
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-800 mb-4">Preview & Verify Your Application</h3>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-4 text-slate-900">
                                         <h4 className="font-semibold text-blue-700 mb-2">Driver Info</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div><span className="font-semibold">Full Name:</span> {driverForm.fullName}</div>
@@ -722,7 +728,7 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                             <div><span className="font-semibold">Badge Tier:</span> {driverForm.badgeTier}</div>
                                         </div>
                                     </div>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-4 text-slate-900">
                                         <h4 className="font-semibold text-blue-700 mb-2">Compliance</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div>
@@ -746,7 +752,7 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-4 text-slate-900">
                                         <h4 className="font-semibold text-blue-700 mb-2">Declaration</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div>
@@ -775,127 +781,130 @@ export default function FleetOwnerHome({ user, onLogout }) {
                                         </div>
                                     )}
                                 </div>
-                            )}
-                        </form>
-                    </div>
+                            )
+                            }
+                        </form >
+                    </div >
                 )}
-                {activePanel === 'list' && (
-                    <div className="max-w-5xl mx-auto">
-                        <h2 className="text-2xl font-bold mb-6 text-blue-900 text-center">List of Applications</h2>
-                        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
-                            {/* Advanced Search */}
-                            <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-                                <div className="flex items-center gap-2 w-full md:w-auto">
-                                    <Search className="w-5 h-5 text-blue-600" />
-                                    <input
-                                        type="text"
-                                        value={search}
-                                        onChange={e => setSearch(e.target.value)}
-                                        placeholder="Search by name, plate, license, status..."
-                                        className="px-4 py-2 border border-gray-300 rounded-lg w-full md:w-64"
-                                    />
+                {
+                    activePanel === 'list' && (
+                        <div className="max-w-5xl mx-auto">
+                            <h2 className="text-2xl font-bold mb-6 text-blue-900 text-center">List of Applications</h2>
+                            <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+                                {/* Advanced Search */}
+                                <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+                                    <div className="flex items-center gap-2 w-full md:w-auto">
+                                        <Search className="w-5 h-5 text-blue-600" />
+                                        <input
+                                            type="text"
+                                            value={search}
+                                            onChange={e => setSearch(e.target.value)}
+                                            placeholder="Search by name, plate, license, status..."
+                                            className="px-4 py-2 border border-gray-300 rounded-lg w-full md:w-64"
+                                        />
+                                    </div>
+                                    <select
+                                        value={searchType}
+                                        onChange={e => setSearchType(e.target.value)}
+                                        className="px-4 py-2 border border-gray-300 rounded-lg"
+                                    >
+                                        <option value="all">All</option>
+                                        <option value="vehicle">Vehicle Permits</option>
+                                        <option value="driver">Driver Permits</option>
+                                    </select>
                                 </div>
-                                <select
-                                    value={searchType}
-                                    onChange={e => setSearchType(e.target.value)}
-                                    className="px-4 py-2 border border-gray-300 rounded-lg"
-                                >
-                                    <option value="all">All</option>
-                                    <option value="vehicle">Vehicle Permits</option>
-                                    <option value="driver">Driver Permits</option>
-                                </select>
+                                {/* Vehicle Applications Table */}
+                                {(searchType === 'all' || searchType === 'vehicle') && (
+                                    <div className="mb-8">
+                                        <h3 className="text-lg font-bold text-blue-700 mb-2">Vehicle Permit Applications</h3>
+                                        {filteredVehicleApps.length === 0 ? (
+                                            <p className="text-gray-600">No vehicle applications found.</p>
+                                        ) : (
+                                            <div className="overflow-x-auto">
+                                                <table className="min-w-full border-collapse rounded-xl overflow-hidden shadow-lg">
+                                                    <thead>
+                                                        <tr className="bg-gradient-to-r from-blue-100 to-green-100">
+                                                            <th className="p-4 text-left text-sm font-bold text-blue-800">ID</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-blue-800">Applicant</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-blue-800">Vehicle</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-blue-800">Submitted At</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-blue-800">Status</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-blue-800">Borough</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-blue-800">Base Affiliation</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {filteredVehicleApps.map(app => (
+                                                            <tr key={app.id} className="border-b hover:bg-blue-50 transition">
+                                                                <td className="p-4 text-sm font-mono">{app.id}</td>
+                                                                <td className="p-4 text-sm">{app.fullName}</td>
+                                                                <td className="p-4 text-sm">
+                                                                    <span className="font-semibold">{app.licensePlate}</span>
+                                                                    <span className="ml-2 text-gray-600">({app.make} {app.model}, {app.year})</span>
+                                                                </td>
+                                                                <td className="p-4 text-sm">{new Date(app.submittedAt).toLocaleString()}</td>
+                                                                <td className="p-4 text-sm">
+                                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold shadow ${app.status === 'Pending' ? 'bg-orange-200 text-orange-800' : 'bg-green-200 text-green-800'}`}>
+                                                                        {app.status}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="p-4 text-sm">{app.borough}</td>
+                                                                <td className="p-4 text-sm">{app.baseAffiliation || <span className="text-gray-400">N/A</span>}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                {/* Driver Applications Table */}
+                                {(searchType === 'all' || searchType === 'driver') && (
+                                    <div>
+                                        <h3 className="text-lg font-bold text-indigo-700 mb-2">Driver Permit Applications</h3>
+                                        {filteredDriverApps.length === 0 ? (
+                                            <p className="text-gray-600">No driver applications found.</p>
+                                        ) : (
+                                            <div className="overflow-x-auto">
+                                                <table className="min-w-full border-collapse rounded-xl overflow-hidden shadow-lg">
+                                                    <thead>
+                                                        <tr className="bg-gradient-to-r from-indigo-100 to-green-100">
+                                                            <th className="p-4 text-left text-sm font-bold text-indigo-800">ID</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-indigo-800">Driver Name</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-indigo-800">License #</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-indigo-800">Submitted At</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-indigo-800">Status</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-indigo-800">Badge Tier</th>
+                                                            <th className="p-4 text-left text-sm font-bold text-indigo-800">State</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {filteredDriverApps.map(permit => (
+                                                            <tr key={permit.id} className="border-b hover:bg-green-50 transition">
+                                                                <td className="p-4 text-sm font-mono">{permit.id}</td>
+                                                                <td className="p-4 text-sm">{permit.fullName}</td>
+                                                                <td className="p-4 text-sm">{permit.licenseNumber || <span className="text-gray-400">N/A</span>}</td>
+                                                                <td className="p-4 text-sm">{new Date(permit.submittedAt).toLocaleString()}</td>
+                                                                <td className="p-4 text-sm">
+                                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold shadow ${permit.status === 'Pending' ? 'bg-orange-200 text-orange-800' : 'bg-green-200 text-green-800'}`}>
+                                                                        {permit.status}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="p-4 text-sm">{permit.badgeTier}</td>
+                                                                <td className="p-4 text-sm">{permit.stateOfIssuance}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                            {/* Vehicle Applications Table */}
-                            {(searchType === 'all' || searchType === 'vehicle') && (
-                                <div className="mb-8">
-                                    <h3 className="text-lg font-bold text-blue-700 mb-2">Vehicle Permit Applications</h3>
-                                    {filteredVehicleApps.length === 0 ? (
-                                        <p className="text-gray-600">No vehicle applications found.</p>
-                                    ) : (
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-full border-collapse rounded-xl overflow-hidden shadow-lg">
-                                                <thead>
-                                                    <tr className="bg-gradient-to-r from-blue-100 to-green-100">
-                                                        <th className="p-4 text-left text-sm font-bold text-blue-800">ID</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-blue-800">Applicant</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-blue-800">Vehicle</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-blue-800">Submitted At</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-blue-800">Status</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-blue-800">Borough</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-blue-800">Base Affiliation</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {filteredVehicleApps.map(app => (
-                                                        <tr key={app.id} className="border-b hover:bg-blue-50 transition">
-                                                            <td className="p-4 text-sm font-mono">{app.id}</td>
-                                                            <td className="p-4 text-sm">{app.fullName}</td>
-                                                            <td className="p-4 text-sm">
-                                                                <span className="font-semibold">{app.licensePlate}</span>
-                                                                <span className="ml-2 text-gray-600">({app.make} {app.model}, {app.year})</span>
-                                                            </td>
-                                                            <td className="p-4 text-sm">{new Date(app.submittedAt).toLocaleString()}</td>
-                                                            <td className="p-4 text-sm">
-                                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold shadow ${app.status === 'Pending' ? 'bg-orange-200 text-orange-800' : 'bg-green-200 text-green-800'}`}>
-                                                                    {app.status}
-                                                                </span>
-                                                            </td>
-                                                            <td className="p-4 text-sm">{app.borough}</td>
-                                                            <td className="p-4 text-sm">{app.baseAffiliation || <span className="text-gray-400">N/A</span>}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            {/* Driver Applications Table */}
-                            {(searchType === 'all' || searchType === 'driver') && (
-                                <div>
-                                    <h3 className="text-lg font-bold text-indigo-700 mb-2">Driver Permit Applications</h3>
-                                    {filteredDriverApps.length === 0 ? (
-                                        <p className="text-gray-600">No driver applications found.</p>
-                                    ) : (
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-full border-collapse rounded-xl overflow-hidden shadow-lg">
-                                                <thead>
-                                                    <tr className="bg-gradient-to-r from-indigo-100 to-green-100">
-                                                        <th className="p-4 text-left text-sm font-bold text-indigo-800">ID</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-indigo-800">Driver Name</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-indigo-800">License #</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-indigo-800">Submitted At</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-indigo-800">Status</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-indigo-800">Badge Tier</th>
-                                                        <th className="p-4 text-left text-sm font-bold text-indigo-800">State</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {filteredDriverApps.map(permit => (
-                                                        <tr key={permit.id} className="border-b hover:bg-green-50 transition">
-                                                            <td className="p-4 text-sm font-mono">{permit.id}</td>
-                                                            <td className="p-4 text-sm">{permit.fullName}</td>
-                                                            <td className="p-4 text-sm">{permit.licenseNumber || <span className="text-gray-400">N/A</span>}</td>
-                                                            <td className="p-4 text-sm">{new Date(permit.submittedAt).toLocaleString()}</td>
-                                                            <td className="p-4 text-sm">
-                                                                <span className={`px-3 py-1 rounded-full text-xs font-semibold shadow ${permit.status === 'Pending' ? 'bg-orange-200 text-orange-800' : 'bg-green-200 text-green-800'}`}>
-                                                                    {permit.status}
-                                                                </span>
-                                                            </td>
-                                                            <td className="p-4 text-sm">{permit.badgeTier}</td>
-                                                            <td className="p-4 text-sm">{permit.stateOfIssuance}</td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
                         </div>
-                    </div>
-                )}
-            </main>
-        </div>
+                    )
+                }
+            </main >
+        </div >
     );
 }

@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { ShieldCheck, XCircle, Search } from "lucide-react";
+import { ShieldCheck, XCircle, Search, LogOut } from "lucide-react";
 import { storage } from '@/app/utils/storage';
 
-export default function PublicVerification() {
+export default function PublicVerification({ user, onLogout }) {
     const [licenseId, setLicenseId] = useState("");
     const [captcha, setCaptcha] = useState("");
     const [result, setResult] = useState(null);
@@ -58,7 +58,15 @@ export default function PublicVerification() {
                     <ShieldCheck className="w-6 h-6 text-slate-700" />
                     <div className="text-xl font-bold text-slate-900">Public Verification</div>
                 </div>
-                {/*<img src="/logo.png" alt="Logo" className="h-10" />*/}
+                {user && onLogout && (
+                    <button
+                        onClick={onLogout}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-md transition-all font-semibold"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                    </button>
+                )}
             </header>
 
             {/* SEARCH FORM */}

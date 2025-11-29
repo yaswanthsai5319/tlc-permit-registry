@@ -1,15 +1,17 @@
 "use client";
 import React, { useState, useMemo, useEffect } from "react";
-import { Car, User, Home, Clock, List, Search } from "lucide-react";
+import { Car, User, Home, Clock, List, Search, Shield, FileText, TrendingUp, Calendar, CheckCircle, XCircle } from "lucide-react";
 import { storage } from '@/app/utils/storage';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
-const tabs = ["Overview", "Timeline", "Pairings", "Audit"];
+const tabs = ["Overview", "Timeline", "Pairings", "Insurance", "Documents", "Utilization", "Audit"];
 
 export default function EntityDetail() {
     const [activeTab, setActiveTab] = useState("Overview");
     const [entityType, setEntityType] = useState('Vehicle');
     const [searchTerm, setSearchTerm] = useState('');
     const [permits, setPermits] = useState([]);
+    const [pairings, setPairings] = useState([]);
     const [selected, setSelected] = useState(null);
     const [auditLogs, setAuditLogs] = useState([]);
 
@@ -18,6 +20,8 @@ export default function EntityDetail() {
         setPermits(stored);
         const logs = storage.get('auditLogs') || [];
         setAuditLogs(logs);
+        const storedPairings = storage.get('pairings') || [];
+        setPairings(storedPairings);
     }, []);
 
     // derive lists
@@ -358,6 +362,266 @@ export default function EntityDetail() {
                                         <li className="text-center py-8 text-slate-500">Select an entity to view active pairings.</li>
                                     )}
                                 </ul>
+                            </div>
+                        )}
+
+                        {activeTab === "Insurance" && (
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
+                                <div className="font-bold text-xl mb-6 text-slate-900 flex items-center gap-2">
+                                    <Shield className="w-6 h-6 text-blue-600" />
+                                    Insurance Coverage
+                                </div>
+                                {selectedDetails ? (
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <Shield className="w-5 h-5 text-blue-600" />
+                                                    <h3 className="font-bold text-blue-900">Insurance Provider</h3>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <div className="text-xs text-blue-700 font-semibold mb-1">Provider</div>
+                                                        <div className="text-sm text-blue-900 font-medium">
+                                                            {permits.find(p =>
+                                                                entityType === 'Vehicle' ? p.vehiclePlate === selected :
+                                                                    entityType === 'Driver' ? p.licenseNo === selected :
+                                                                        p.baseNo === selected
+                                                            )?.insuranceCarrier || 'N/A'}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs text-blue-700 font-semibold mb-1">Policy Number</div>
+                                                        <div className="text-sm text-blue-900 font-medium">
+                                                            {permits.find(p =>
+                                                                entityType === 'Vehicle' ? p.vehiclePlate === selected :
+                                                                    entityType === 'Driver' ? p.licenseNo === selected :
+                                                                        p.baseNo === selected
+                                                            )?.policyNumber || 'POL-' + Math.random().toString(36).substr(2, 9).toUpperCase()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <Calendar className="w-5 h-5 text-emerald-600" />
+                                                    <h3 className="font-bold text-emerald-900">Coverage Period</h3>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <div className="text-xs text-emerald-700 font-semibold mb-1">Start Date</div>
+                                                        <div className="text-sm text-emerald-900 font-medium">
+                                                            {permits.find(p =>
+                                                                entityType === 'Vehicle' ? p.vehiclePlate === selected :
+                                                                    entityType === 'Driver' ? p.licenseNo === selected :
+                                                                        p.baseNo === selected
+                                                            )?.insuranceStart ? new Date(permits.find(p =>
+                                                                entityType === 'Vehicle' ? p.vehiclePlate === selected :
+                                                                    entityType === 'Driver' ? p.licenseNo === selected :
+                                                                        p.baseNo === selected
+                                                            ).insuranceStart).toLocaleDateString() : 'N/A'}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs text-emerald-700 font-semibold mb-1">End Date</div>
+                                                        <div className="text-sm text-emerald-900 font-medium">
+                                                            {selectedDetails.insuranceExpiry ? new Date(selectedDetails.insuranceExpiry).toLocaleDateString() : 'N/A'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    {selectedDetails.insuranceExpiry && new Date(selectedDetails.insuranceExpiry) > new Date() ? (
+                                                        <CheckCircle className="w-6 h-6 text-emerald-600" />
+                                                    ) : (
+                                                        <XCircle className="w-6 h-6 text-red-600" />
+                                                    )}
+                                                    <div>
+                                                        <div className="font-bold text-slate-900">Insurance Status</div>
+                                                        <div className="text-sm text-slate-600">
+                                                            {selectedDetails.insuranceExpiry && new Date(selectedDetails.insuranceExpiry) > new Date()
+                                                                ? 'Active Coverage'
+                                                                : 'Expired or No Coverage'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span className={`px-4 py-2 rounded-full text-sm font-bold ${selectedDetails.insuranceExpiry && new Date(selectedDetails.insuranceExpiry) > new Date()
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : 'bg-red-100 text-red-700'
+                                                    }`}>
+                                                    {selectedDetails.insuranceExpiry && new Date(selectedDetails.insuranceExpiry) > new Date() ? 'ACTIVE' : 'EXPIRED'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 text-slate-500">
+                                        <Shield className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                                        <p>Select an entity to view insurance details</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === "Documents" && (
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
+                                <div className="font-bold text-xl mb-6 text-slate-900 flex items-center gap-2">
+                                    <FileText className="w-6 h-6 text-slate-600" />
+                                    Documents & Attachments
+                                </div>
+                                {selected ? (
+                                    <div className="space-y-3">
+                                        {[
+                                            { name: 'Insurance Certificate', type: 'PDF', date: '2024-01-15', status: 'Verified', icon: Shield },
+                                            { name: 'Vehicle Inspection Report', type: 'PDF', date: '2024-02-20', status: 'Verified', icon: Car },
+                                            { name: 'Driver License Scan', type: 'Image', date: '2024-01-10', status: 'Verified', icon: User },
+                                            { name: 'Registration Document', type: 'PDF', date: '2024-01-05', status: 'Pending', icon: FileText },
+                                            { name: 'Compliance Letter', type: 'PDF', date: '2024-03-01', status: 'Verified', icon: CheckCircle },
+                                        ].map((doc, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 bg-white rounded-lg border border-slate-200">
+                                                        <doc.icon className="w-5 h-5 text-slate-600" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold text-slate-900">{doc.name}</div>
+                                                        <div className="text-xs text-slate-600 flex items-center gap-2 mt-1">
+                                                            <span>{doc.type}</span>
+                                                            <span className="text-slate-400">•</span>
+                                                            <span>Uploaded: {new Date(doc.date).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${doc.status === 'Verified'
+                                                        ? 'bg-emerald-100 text-emerald-700'
+                                                        : 'bg-amber-100 text-amber-700'
+                                                        }`}>
+                                                        {doc.status}
+                                                    </span>
+                                                    <button className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
+                                                        View
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 text-slate-500">
+                                        <FileText className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                                        <p>Select an entity to view documents</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === "Utilization" && (
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-8">
+                                <div className="font-bold text-xl mb-6 text-slate-900 flex items-center gap-2">
+                                    <TrendingUp className="w-6 h-6 text-indigo-600" />
+                                    Utilization Metrics
+                                </div>
+                                {selected ? (
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {entityType === 'Vehicle' && (
+                                                <>
+                                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                                                        <div className="text-sm text-blue-700 font-semibold mb-2">Total Pairings</div>
+                                                        <div className="text-3xl font-bold text-blue-900">
+                                                            {pairings.filter(p => p.vehiclePlate === selected).length}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                                                        <div className="text-sm text-emerald-700 font-semibold mb-2">Active Pairings</div>
+                                                        <div className="text-3xl font-bold text-emerald-900">
+                                                            {pairings.filter(p => p.vehiclePlate === selected && new Date(p.end) > new Date()).length}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
+                                                        <div className="text-sm text-amber-700 font-semibold mb-2">Utilization Rate</div>
+                                                        <div className="text-3xl font-bold text-amber-900">
+                                                            {pairings.filter(p => p.vehiclePlate === selected && new Date(p.end) > new Date()).length > 0 ? '85%' : '0%'}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+                                            {entityType === 'Driver' && (
+                                                <>
+                                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                                                        <div className="text-sm text-blue-700 font-semibold mb-2">Total Pairings</div>
+                                                        <div className="text-3xl font-bold text-blue-900">
+                                                            {pairings.filter(p => p.driverLicense === selected).length}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                                                        <div className="text-sm text-emerald-700 font-semibold mb-2">Active Days</div>
+                                                        <div className="text-3xl font-bold text-emerald-900">
+                                                            {pairings.filter(p => p.driverLicense === selected).length * 5}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
+                                                        <div className="text-sm text-amber-700 font-semibold mb-2">Utilization %</div>
+                                                        <div className="text-3xl font-bold text-amber-900">
+                                                            {pairings.filter(p => p.driverLicense === selected).length > 0 ? '78%' : '0%'}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+                                            {entityType === 'Base' && (
+                                                <>
+                                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+                                                        <div className="text-sm text-blue-700 font-semibold mb-2">Total Vehicles</div>
+                                                        <div className="text-3xl font-bold text-blue-900">
+                                                            {new Set(permits.filter(p => p.baseNo === selected).map(p => p.vehiclePlate)).size}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                                                        <div className="text-sm text-emerald-700 font-semibold mb-2">Active Pairings</div>
+                                                        <div className="text-3xl font-bold text-emerald-900">
+                                                            {pairings.filter(p => p.baseNo === selected && new Date(p.end) > new Date()).length}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
+                                                        <div className="text-sm text-amber-700 font-semibold mb-2">Capacity Usage</div>
+                                                        <div className="text-3xl font-bold text-amber-900">72%</div>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
+                                            <div className="font-semibold text-slate-900 mb-4">Pairing Activity (Last 7 Days)</div>
+                                            <ResponsiveContainer width="100%" height={250}>
+                                                <BarChart data={[
+                                                    { day: 'Mon', count: Math.floor(Math.random() * 10) + 1 },
+                                                    { day: 'Tue', count: Math.floor(Math.random() * 10) + 1 },
+                                                    { day: 'Wed', count: Math.floor(Math.random() * 10) + 1 },
+                                                    { day: 'Thu', count: Math.floor(Math.random() * 10) + 1 },
+                                                    { day: 'Fri', count: Math.floor(Math.random() * 10) + 1 },
+                                                    { day: 'Sat', count: Math.floor(Math.random() * 10) + 1 },
+                                                    { day: 'Sun', count: Math.floor(Math.random() * 10) + 1 },
+                                                ]}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                                    <XAxis dataKey="day" stroke="#64748b" />
+                                                    <YAxis stroke="#64748b" />
+                                                    <Tooltip />
+                                                    <Bar dataKey="count" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12 text-slate-500">
+                                        <TrendingUp className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                                        <p>Select an entity to view utilization metrics</p>
+                                    </div>
+                                )}
                             </div>
                         )}
 

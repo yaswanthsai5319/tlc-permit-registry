@@ -67,7 +67,39 @@ export default function PairingWizard() {
 
     useEffect(() => {
         const stored = storage.get('permits') || [];
-        setPermits(stored);
+        const driverPermits = storage.get('driverPermits') || [];
+        const vehicleApps = storage.get('vehicleApplications') || [];
+
+        // Merge all sources
+        const allPermits = [...stored];
+
+        // Add approved driver permits if not already present
+        driverPermits.forEach(dp => {
+            if (dp.status === 'Approved' && !allPermits.some(p => p.licenseNo === dp.licenseNumber)) {
+                allPermits.push({
+                    ...dp,
+                    licenseNo: dp.licenseNumber, // Map fields
+                    driverName: dp.fullName,
+                    type: 'Driver'
+                });
+            }
+        });
+
+        // Add approved vehicle applications if not already present
+        vehicleApps.forEach(va => {
+            if (va.status === 'Approved' && !allPermits.some(p => p.vehiclePlate === va.licensePlate)) {
+                allPermits.push({
+                    ...va,
+                    vehiclePlate: va.licensePlate, // Map fields
+                    vehicleVin: va.vin,
+                    vehicleMake: va.make,
+                    vehicleModel: va.model,
+                    type: 'Vehicle'
+                });
+            }
+        });
+
+        setPermits(allPermits);
         const storedPairings = storage.get('pairings') || [];
         setPairings(storedPairings);
     }, []);
@@ -76,7 +108,16 @@ export default function PairingWizard() {
         const map = new Map();
         permits.forEach(p => {
             if (p.licenseNo && !map.has(p.licenseNo)) {
-                map.set(p.licenseNo, { licenseNo: p.licenseNo, name: p.driverName, licenseExpiry: p.licenseExpiry, status: p.driverSuspended ? 'SUSPENDED' : (p.status || 'N/A') });
+                // Only show Active or Approved drivers
+                const status = p.driverSuspended ? 'SUSPENDED' : (p.status || 'N/A');
+                if (status === 'ACTIVE' || status === 'Approved' || status === 'Active') {
+                    map.set(p.licenseNo, {
+                        licenseNo: p.licenseNo,
+                        name: p.driverName,
+                        licenseExpiry: p.licenseExpiry,
+                        status: status
+                    });
+                }
             }
         });
         return Array.from(map.values());
@@ -86,13 +127,17 @@ export default function PairingWizard() {
         const map = new Map();
         permits.forEach(p => {
             if (p.vehiclePlate && !map.has(p.vehiclePlate)) {
-                map.set(p.vehiclePlate, {
-                    plate: p.vehiclePlate,
-                    vin: p.vehicleVin,
-                    model: `${p.vehicleMake || ''} ${p.vehicleModel || ''}`.trim(),
-                    insuranceExpiry: p.insuranceExpiry,
-                    status: p.status || 'N/A'
-                });
+                // Only show Active or Approved vehicles
+                const status = p.status || 'N/A';
+                if (status === 'ACTIVE' || status === 'Approved' || status === 'Active') {
+                    map.set(p.vehiclePlate, {
+                        plate: p.vehiclePlate,
+                        vin: p.vehicleVin,
+                        model: `${p.vehicleMake || ''} ${p.vehicleModel || ''}`.trim(),
+                        insuranceExpiry: p.insuranceExpiry,
+                        status: status
+                    });
+                }
             }
         });
         return Array.from(map.values());

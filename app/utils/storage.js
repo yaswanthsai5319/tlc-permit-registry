@@ -37,8 +37,11 @@ export const initializeData = () => {
   // Initialize users if not exists
   if (!storage.get('users')) {
     storage.set('users', [
-      { username: 'user', password: 'user123', role: 'user' },
-      { username: 'admin', password: 'admin123', role: 'admin' }
+      { username: 'admin', password: 'admin123', role: 'admin' },
+      { username: 'carrier', password: 'carrier123', role: 'carrier' },
+      { username: 'compliance', password: 'compliance123', role: 'compliance' },
+      { username: 'marketplace', password: 'marketplace123', role: 'marketplace' },
+      { username: 'public', password: 'public123', role: 'public' }
     ]);
   }
 

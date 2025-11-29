@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ClipboardList, CheckCircle, User, Car, FileText, Shield, LogOut } from 'lucide-react';
 import { storage } from '../utils/storage';
 
@@ -37,7 +37,15 @@ export default function VehicleOwnerHome({ user, onLogout }) {
         baseAffiliation: '',
     });
     const [errors, setErrors] = useState({});
+
     const [success, setSuccess] = useState(false);
+    const [availableBases, setAvailableBases] = useState([]);
+
+    useEffect(() => {
+        const permits = storage.get('permits') || [];
+        const bases = permits.filter(p => p.type === 'Base' && p.status === 'ACTIVE');
+        setAvailableBases(bases);
+    }, []);
 
     // For file uploads
     const handleFileChange = (e) => {
@@ -173,11 +181,10 @@ export default function VehicleOwnerHome({ user, onLogout }) {
                     {sidebarTabs.map(tab => (
                         <button
                             key={tab.key}
-                            className={`flex items-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${
-                                activePanel === tab.key
-                                    ? 'bg-blue-600 text-white shadow'
-                                    : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all ${activePanel === tab.key
+                                ? 'bg-blue-600 text-white shadow'
+                                : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
+                                }`}
                             onClick={() => { setActivePanel(tab.key); setSuccess(false); }}
                         >
                             {tab.icon}
@@ -222,28 +229,28 @@ export default function VehicleOwnerHome({ user, onLogout }) {
                                 <div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Applicant Type</label>
-                                        <select name="applicantType" value={formData.applicantType} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <select name="applicantType" value={formData.applicantType} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900">
                                             <option value="Vehicle Owner">Vehicle Owner</option>
                                         </select>
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
-                                        <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {errors.fullName && <p className="text-red-600 text-sm">{errors.fullName}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Phone *</label>
-                                        <input type="tel" name="contactPhone" value={formData.contactPhone} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="+1" />
+                                        <input type="tel" name="contactPhone" value={formData.contactPhone} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="+1" />
                                         {errors.contactPhone && <p className="text-red-600 text-sm">{errors.contactPhone}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
-                                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="owner@example.com" />
+                                        <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="owner@example.com" />
                                         {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Organization Name (if applicable)</label>
-                                        <input type="text" name="organization" value={formData.organization} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="XYZ Fleet" />
+                                        <input type="text" name="organization" value={formData.organization} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="XYZ Fleet" />
                                     </div>
                                     <div className="flex justify-end gap-2 mt-6">
                                         <button type="button" className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700" onClick={handleNextTab}>
@@ -256,17 +263,17 @@ export default function VehicleOwnerHome({ user, onLogout }) {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">License Plate *</label>
-                                        <input type="text" name="licensePlate" value={formData.licensePlate} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="ABC1234" />
+                                        <input type="text" name="licensePlate" value={formData.licensePlate} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="ABC1234" />
                                         {errors.licensePlate && <p className="text-red-600 text-sm">{errors.licensePlate}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">VIN *</label>
-                                        <input type="text" name="vin" value={formData.vin} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="1FTFX12345ABCDE1234" />
+                                        <input type="text" name="vin" value={formData.vin} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="1FTFX12345ABCDE1234" />
                                         {errors.vin && <p className="text-red-600 text-sm">{errors.vin}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Make *</label>
-                                        <select name="make" value={formData.make} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <select name="make" value={formData.make} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900">
                                             <option value="">Select</option>
                                             {MAKES.map(make => <option key={make} value={make}>{make}</option>)}
                                         </select>
@@ -274,21 +281,21 @@ export default function VehicleOwnerHome({ user, onLogout }) {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Model *</label>
-                                        <input type="text" name="model" value={formData.model} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Camry" />
+                                        <input type="text" name="model" value={formData.model} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="Camry" />
                                         {errors.model && <p className="text-red-600 text-sm">{errors.model}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Year *</label>
-                                        <input type="number" name="year" value={formData.year} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="2018" />
+                                        <input type="number" name="year" value={formData.year} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="2018" />
                                         {errors.year && <p className="text-red-600 text-sm">{errors.year}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Color (Optional)</label>
-                                        <input type="text" name="color" value={formData.color} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="White" />
+                                        <input type="text" name="color" value={formData.color} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="White" />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Usage Type *</label>
-                                        <input type="text" name="usageType" value={formData.usageType} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Taxi" />
+                                        <input type="text" name="usageType" value={formData.usageType} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" placeholder="Taxi" />
                                         {errors.usageType && <p className="text-red-600 text-sm">{errors.usageType}</p>}
                                     </div>
                                     {/* Empty div for grid alignment */}
@@ -307,26 +314,26 @@ export default function VehicleOwnerHome({ user, onLogout }) {
                                 <div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Insurance Binder *</label>
-                                        <input type="file" name="insuranceBinder" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="file" name="insuranceBinder" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {errors.insuranceBinder && <p className="text-red-600 text-sm">{errors.insuranceBinder}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Inspection Certificate *</label>
-                                        <input type="file" name="inspectionCertificate" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                                        <input type="file" name="inspectionCertificate" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900" />
                                         {errors.inspectionCertificate && <p className="text-red-600 text-sm">{errors.inspectionCertificate}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Borough *</label>
-                                        <select name="borough" value={formData.borough} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <select name="borough" value={formData.borough} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900">
                                             {BOROUGHS.map(b => <option key={b} value={b}>{b}</option>)}
                                         </select>
                                         {errors.borough && <p className="text-red-600 text-sm">{errors.borough}</p>}
                                     </div>
                                     <div className="mb-4">
                                         <label className="block text-sm font-semibold text-gray-700 mb-2">Base Affiliation (Optional)</label>
-                                        <select name="baseAffiliation" value={formData.baseAffiliation} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <select name="baseAffiliation" value={formData.baseAffiliation} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-slate-900">
                                             <option value="">Select</option>
-                                            {BASES.map(base => <option key={base} value={base}>{base}</option>)}
+                                            {availableBases.map(base => <option key={base.baseNo} value={base.baseNo}>{base.baseName} ({base.baseNo})</option>)}
                                         </select>
                                     </div>
                                     <div className="flex justify-between gap-2 mt-6">
@@ -342,7 +349,7 @@ export default function VehicleOwnerHome({ user, onLogout }) {
                             {activeFormTab === 'preview' && (
                                 <div>
                                     <h3 className="text-lg font-bold text-gray-800 mb-4">Preview & Verify Your Application</h3>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-4 text-slate-900">
                                         <h4 className="font-semibold text-blue-700 mb-2">Applicant Info</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div><span className="font-semibold">Applicant Type:</span> {formData.applicantType}</div>
@@ -352,7 +359,7 @@ export default function VehicleOwnerHome({ user, onLogout }) {
                                             <div><span className="font-semibold">Organization:</span> {formData.organization}</div>
                                         </div>
                                     </div>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-4 text-slate-900">
                                         <h4 className="font-semibold text-blue-700 mb-2">Vehicle Details</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div><span className="font-semibold">License Plate:</span> {formData.licensePlate}</div>
@@ -364,7 +371,7 @@ export default function VehicleOwnerHome({ user, onLogout }) {
                                             <div><span className="font-semibold">Usage Type:</span> {formData.usageType}</div>
                                         </div>
                                     </div>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-4 text-slate-900">
                                         <h4 className="font-semibold text-blue-700 mb-2">Compliance</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                             <div>
